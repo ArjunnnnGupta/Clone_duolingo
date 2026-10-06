@@ -31,9 +31,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(unique=True)
     display_name: Mapped[str]
     avatar_color: Mapped[str]
-    timezone: Mapped[str] = mapped_column(
-        default=DEFAULT_TIMEZONE, server_default=DEFAULT_TIMEZONE
-    )
+    timezone: Mapped[str] = mapped_column(default=DEFAULT_TIMEZONE, server_default=DEFAULT_TIMEZONE)
     daily_goal_xp: Mapped[int] = mapped_column(
         default=DEFAULT_DAILY_GOAL_XP, server_default=text(str(DEFAULT_DAILY_GOAL_XP))
     )

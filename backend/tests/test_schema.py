@@ -74,9 +74,7 @@ def test_unknown_exercise_type_is_rejected(session: Session) -> None:
     session.flush()
     lesson_id = course.units[0].skills[0].lessons[0].id
     session.add(
-        Exercise(
-            lesson_id=lesson_id, position=2, type="essay", prompt="?", payload={}, solution={}
-        )
+        Exercise(lesson_id=lesson_id, position=2, type="essay", prompt="?", payload={}, solution={})
     )
     with pytest.raises(IntegrityError):
         session.flush()
