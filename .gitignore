@@ -1,0 +1,9 @@
+reference/
+backend/data/*.db
+.venv/
+__pycache__/
+.env
+.env.local
+node_modules/
+.next/
+.DS_Store

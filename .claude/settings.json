@@ -1,0 +1,21 @@
+{
+  "model": "sonnet",
+  "permissions": {
+    "allow": [
+      "Bash(pytest:*)",
+      "Bash(backend/.venv/bin/python -m pytest:*)",
+      "Bash(ruff check:*)",
+      "Bash(backend/.venv/bin/ruff check:*)",
+      "Bash(uvicorn:*)",
+      "Bash(backend/.venv/bin/uvicorn:*)",
+      "Bash(python3 -m venv:*)",
+      "Bash(python -m venv:*)",
+      "Bash(backend/.venv/bin/python -m app.seed.run)",
+      "Bash(npm run dev)",
+      "Bash(npm run lint)",
+      "Bash(npm install:*)",
+      "Bash(backend/.venv/bin/pip install:*)",
+      "Bash(backend/.venv/bin/python -m pip install:*)"
+    ]
+  }
+}
