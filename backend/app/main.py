@@ -1,9 +1,10 @@
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import health
+from app.api import dev, health, hearts, leaderboard, lessons, me, path
 from app.config import get_settings
-from app.errors import AppError, app_error_handler
+from app.errors import AppError, app_error_handler, validation_error_handler
 
 
 def create_app() -> FastAPI:
@@ -17,7 +18,11 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.add_exception_handler(AppError, app_error_handler)
-    app.include_router(health.router, prefix="/api")
+    app.add_exception_handler(RequestValidationError, validation_error_handler)
+    for router in (health, me, path, lessons, hearts, leaderboard):
+        app.include_router(router.router, prefix="/api")
+    if settings.enable_dev_tools:
+        app.include_router(dev.router, prefix="/api")
     return app
 
 

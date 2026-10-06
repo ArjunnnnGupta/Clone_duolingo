@@ -12,6 +12,7 @@ from app.schemas.attempt_result import (
     DailyGoalResult,
     StreakResult,
 )
+from app.services.lesson_engine import accuracy_percent
 
 Submission = dict[str, Any]
 SubmissionBuilder = Callable[[Exercise], Submission]
@@ -129,7 +130,7 @@ def build_attempt_result(
     exercise_count = len(attempt.lesson.exercises)
     result = AttemptResult(
         xp_earned=attempt.xp_earned,
-        accuracy=round(100 * exercise_count / (exercise_count + attempt.mistakes)),
+        accuracy=accuracy_percent(exercise_count, attempt.mistakes),
         mistakes=attempt.mistakes,
         duration_s=int((finished_at - attempt.started_at).total_seconds()),
         streak=StreakResult(count=streak_count, extended=True),

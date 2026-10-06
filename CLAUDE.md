@@ -17,7 +17,7 @@ backend/app/
   deps.py        get_db, get_current_user (default learner, id 1)
   models/        SQLAlchemy models (14 tables, see plan section 4)
   schemas/       Pydantic request/response models; exercise payloads as a discriminated union
-  services/      clock, hearts, streak, path, grading, lesson_engine, achievements, leaderboard
+  services/      clock, hearts, streak, path, grading, lesson_engine, achievements, leaderboard, profile, dev_tools
   api/           routers: me, path, lessons, hearts, leaderboard, dev
   seed/          content/ (vocab: structures.py + unit_1..3.py), generator.py, attempt_history.py, run.py
 backend/tests/

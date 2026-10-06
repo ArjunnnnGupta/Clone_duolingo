@@ -140,3 +140,41 @@ ExerciseDefinition = Annotated[
 ]
 
 EXERCISE_ADAPTER: TypeAdapter[ExerciseDefinition] = TypeAdapter(ExerciseDefinition)
+
+ExercisePayload = (
+    MultipleChoicePayload
+    | TranslatePayload
+    | MatchPairsPayload
+    | FillBlankPayload
+    | TypeAnswerPayload
+)
+
+
+class ExercisePublic(BaseModel):
+    """An exercise as the client sees it: the payload and never the solution."""
+
+    id: int
+    type: str
+    prompt: str
+    payload: ExercisePayload
+
+
+# Answer shapes, one per kind of input. The client sends only the shape; grading.py picks the
+# model from the exercise's stored type, so a learner can never relabel an exercise.
+class MultipleChoiceAnswer(_Strict):
+    option_id: str
+
+
+class TranslateAnswer(_Strict):
+    tiles: list[str]  # tile texts in the order the learner placed them
+
+
+class MatchPairsAnswer(_Strict):
+    pairs: list[tuple[str, str]]  # (left item id, right item id)
+    mismatches: int = Field(ge=0)  # wrong taps the client already rejected; never cost a heart
+
+
+class TextAnswer(_Strict):
+    """Fill-blank picks and typed answers both arrive as plain text."""
+
+    text: str

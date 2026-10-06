@@ -9,9 +9,10 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///data/app.db"
     # Comma-separated in the environment, e.g. "https://app.vercel.app,http://localhost:3000".
     cors_origins: str = "http://localhost:3000"
-    enable_dev_tools: bool = True
+    # Off unless the environment turns it on: /api/dev/reset wipes the database, so a deploy
+    # must never expose it by default. backend/.env enables it for local development.
+    enable_dev_tools: bool = False
     heart_regen_minutes: int = 30
-    max_hearts: int = 5
     default_user_id: int = 1
     seed_on_startup: bool = True
 
