@@ -9,6 +9,8 @@ from app.models.base import Base, sql_in_list
 
 EXERCISE_TYPES = ("multiple_choice", "translate", "match_pairs", "fill_blank", "type_answer")
 DEFAULT_LESSON_XP = 10
+# Extra XP for a lesson finished with zero mistakes; shared by the seeder and lesson_engine.
+PERFECT_LESSON_BONUS_XP = 5
 
 
 class Course(Base):

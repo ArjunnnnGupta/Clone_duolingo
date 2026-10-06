@@ -32,6 +32,9 @@ class LessonAttempt(Base):
     xp_earned: Mapped[int] = mapped_column(default=0)
     started_at: Mapped[datetime]
     finished_at: Mapped[datetime | None]
+    # Full finalize result, stored so a retried or revisited completed attempt returns the
+    # original streak/goal/achievement outcome instead of recomputing it from changed state.
+    result: Mapped[dict[str, Any] | None]
 
     user: Mapped[User] = relationship(back_populates="attempts")
     lesson: Mapped[Lesson] = relationship()

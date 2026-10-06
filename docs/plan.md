@@ -284,7 +284,7 @@ Fifteen endpoints cover everything. The lesson is driven by three: **start**, **
 | --- | --- | --- | --- | --- |
 | POST /api/hearts/refill | Mocked gem refill | — | `MeResponse` | gems ≥ 350 else 409 `NOT_ENOUGH_GEMS`; set hearts = 5, gems −350; if an attempt was `failed` by hearts, reopen it to `in_progress` |
 | POST /api/hearts/practice | "Practice to earn hearts" placeholder | — | `MeResponse` | +1 heart (cap 5); clearly labelled mock |
-| GET /api/leaderboard?period=week | Weekly league | — | `{period_start, period_end, entries:[{rank, user_id, display_name, avatar_color, xp, is_me}]}` | SUM(daily\_activity.xp\_earned) for the current Mon–Sun week, GROUP BY user, ORDER BY xp DESC |
+| GET /api/leaderboard?period=week | Weekly league | — | `{period_start, period_end, entries:[{rank, user_id, display_name, avatar_color, xp, is_me}]}` | users LEFT JOIN this week's daily\_activity, COALESCE(SUM(xp\_earned), 0) for the current Mon–Sun week, GROUP BY user, ORDER BY xp DESC. The LEFT JOIN keeps learners with 0 XP this week (everyone on a Monday) on the board at 0 instead of vanishing |
 | GET /api/achievements | All badges with unlock state | — | list | achievements LEFT JOIN user\_achievements |
 
 ### Dev tools (enabled by `ENABLE_DEV_TOOLS=true`)
@@ -491,12 +491,12 @@ Seed **Spanish for English speakers: 3 units × 4 skills × 3 lessons × 8 exerc
 | 2 · Get around a city (blue) | Places · Travel · Directions · Time |
 | 3 · Talk about your day (purple) | Routine · Weather · Hobbies · Feelings |
 
-### Per-skill source data (`seed/content.py`)
+### Per-skill source data (`seed/content/`, one file per unit)
 
 - 8 vocabulary pairs: `("agua", "water", "💧")`, `("pan", "bread", "🍞")` …
 - 5 sentence pairs with tokens: `es="Yo bebo agua"`, `en="I drink water"`, plus 1–2 accepted alternatives ("I am drinking water").
 
-### Generator rules (`seed/generator.py`, `random.seed(skill_id)` so output is stable)
+### Generator rules (`seed/generator.py`, seeded with `unit_position * 10 + skill_position` so output is stable and independent of database ids)
 
 Each lesson gets 8 exercises in this order, so even lesson 1 shows all five types:
 
@@ -563,7 +563,7 @@ Build backend-first through the lesson API, then the frontend in the order a use
 | 1 · Setup | Monorepo; `create-next-app` (TS, Tailwind, App Router); FastAPI skeleton with `/api/health`, CORS, settings; Nunito + design tokens; `api.ts`; push to GitHub; deploy both hello-worlds | — | Live frontend URL calling live `/api/health` | Health check works locally and deployed; CORS OK from the Vercel domain |
 | 2 · Schema | SQLAlchemy models for all 14 tables, constraints, `PRAGMA foreign_keys=ON`, `create_all` | 1 | `app.db` with correct tables | Inserting a row with a bad FK or bad `type` fails; `sqlite3 .schema` matches the doc |
 | 3 · Seed | `content.py` vocab, generator, Pydantic payload union, demo learner + history, other learners, achievements; `python -m app.seed.run` (drop + create + seed) | 2 | Populated DB in one command | Counts: 3 units, 12 skills, 36 lessons, 288 exercises; learner totals equal sums of history |
-| 4 · Backend APIs | Services (clock, hearts, streak, path, grading, lesson\_engine, achievements, leaderboard) then routers; error handler | 3 | Full API usable in `/docs` | pytest: each grader; hearts regen; streak extend/keep/reset; finalize idempotency; locked skill 403; play one full lesson via `/docs` |
+| 4 · Backend APIs | Services (clock, hearts, streak, path, grading, lesson\_engine, achievements, leaderboard) then routers; error handler. Leaderboard: LEFT JOIN users so 0-XP learners still appear (ranked last at 0); lesson\_engine: finalize guard returns the stored `lesson_attempts.result` | 3 | Full API usable in `/docs` | pytest: each grader; hearts regen; streak extend/keep/reset; finalize idempotency; locked skill 403; play one full lesson via `/docs` |
 | 5 · Learning path | Shell layout (sidebar, rail, mobile bars), StatsBar, UnitHeader, SkillNode states, ProgressRing, zig-zag, node popover, START flow | 4 | Home looks like Duolingo with real data | Node states match DB; locked tap shows tooltip; START creates attempt and routes |
 | 6 · Lesson engine | Lesson page, reducer, header/progress/hearts, footer + feedback bar, 5 exercise components, quit modal | 5 | A full lesson playable end-to-end | Every type correct and wrong; re-queue; refresh mid-lesson resumes; Enter shortcuts |
 | 7 · Gamification | Out-of-hearts modal + refill, completion screens (lesson, streak, daily goal), hearts dropdown countdown, dev tools (advance day, reset), toasts | 6 | Full loop with consequences | 0 hearts blocks start and fails attempt; refill reopens it; advance day → streak +1 on next lesson; skip 2 days → reset |

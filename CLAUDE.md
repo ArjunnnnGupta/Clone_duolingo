@@ -19,7 +19,7 @@ backend/app/
   schemas/       Pydantic request/response models; exercise payloads as a discriminated union
   services/      clock, hearts, streak, path, grading, lesson_engine, achievements, leaderboard
   api/           routers: me, path, lessons, hearts, leaderboard, dev
-  seed/          content.py (vocab), generator.py, run.py
+  seed/          content/ (vocab: structures.py + unit_1..3.py), generator.py, attempt_history.py, run.py
 backend/tests/
 frontend/src/
   app/(main)/    learn, leaderboard, profile, settings, quests/shop/friends (Coming Soon)
