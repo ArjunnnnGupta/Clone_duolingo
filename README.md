@@ -4,9 +4,9 @@ A full-stack Spanish-for-English-speakers course: a zig-zag learning path, a fiv
 
 | | |
 |---|---|
-| **Live demo** | <!-- TODO: paste demo URL --> |
-| **API docs (Swagger)** | <!-- TODO: paste API URL -->`/docs` (locally: http://localhost:8000/docs) |
-| **Demo GIF** | <!-- TODO: hero GIF of a full lesson: start → 8 exercises → complete → streak screen --> |
+| **Live demo** | https://clone-duolingo-swart.vercel.app/learn |
+| **API (Railway)** | https://cloneduolingo-production.up.railway.app |
+| **API docs (Swagger)** | https://cloneduolingo-production.up.railway.app/docs (locally: http://localhost:8000/docs) |
 
 > Original mascot, icons and wordmark throughout. No Duolingo owl, logo, illustrations or font files (the font is Nunito via `next/font`).
 
@@ -41,7 +41,7 @@ A full-stack Spanish-for-English-speakers course: a zig-zag learning path, a fiv
 
 ### Bonus implemented
 
-- Dark mode: Light/Dark toggle in Settings, no flash on load
+- Light and dark themes: a Light/Dark toggle in Settings. Light is the default (the app does not follow the OS setting). The choice is saved in `localStorage` and applied before first paint, so there is no flash. Every colour is a CSS-variable token, so components are identical in both themes
 - Responsive layout: 3-column desktop, icon-only sidebar on tablet, top stats bar + bottom tab bar on mobile
 - Achievements system: 5 badges, each measuring a stat, with server-side progress toward its threshold
 - Leaderboard computed from real activity rows across 15 learners, not hard-coded ranks
@@ -257,25 +257,25 @@ This is the flow as built. **The server keeps no queue**: the client re-queues w
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Starting: tap active/completed skill → START or PRACTICE
-  Starting --> Blocked: hearts = 0 (409 NO_HEARTS)
-  Blocked --> [*]: out-of-hearts modal (REFILL / NO THANKS)
-  Starting --> Answering: POST /lessons/start → exercises (no solutions)
-  Answering --> EncouragementScreen: first hard exercise, no mistakes so far
-  EncouragementScreen --> Answering: CONTINUE
-  Answering --> Checking: CHECK (answer selected) · match pairs submit on last pair
-  Checking --> FeedbackCorrect: server: correct
-  Checking --> FeedbackWrong: server: wrong → hearts −1 · client moves exercise to END of its queue
-  FeedbackCorrect --> Answering: CONTINUE, exercises left
-  FeedbackWrong --> ReviewIntro: first re-queued exercise reached
-  ReviewIntro --> Answering: CONTINUE ("Let's review the ones you missed!")
-  FeedbackWrong --> Answering: CONTINUE, hearts > 0
-  FeedbackWrong --> OutOfHearts: server: status failed (hearts = 0)
-  OutOfHearts --> Answering: REFILL with gems (server reopens the attempt)
-  OutOfHearts --> [*]: NO THANKS, no XP
-  FeedbackCorrect --> Complete: last exercise correct → server finalizes in the same request
-  Complete --> Celebrations: XP + accuracy
-  Celebrations --> [*]: streak screen (if extended) → daily-goal screen (if just met) → /learn
+  [*] --> Starting : tap a skill, press START or PRACTICE
+  Starting --> Blocked : no hearts left
+  Blocked --> [*] : out of hearts modal
+  Starting --> Answering : lesson started, exercises have no solutions
+  Answering --> EncouragementScreen : first hard exercise and no mistakes so far
+  EncouragementScreen --> Answering : CONTINUE
+  Answering --> Checking : CHECK, or last match pair
+  Checking --> FeedbackCorrect : server says correct
+  Checking --> FeedbackWrong : server says wrong and takes a heart, client requeues the exercise at the end
+  FeedbackCorrect --> Answering : CONTINUE, exercises left
+  FeedbackWrong --> ReviewIntro : first requeued exercise reached
+  ReviewIntro --> Answering : CONTINUE
+  FeedbackWrong --> Answering : CONTINUE, hearts left
+  FeedbackWrong --> OutOfHearts : server says attempt failed, hearts are 0
+  OutOfHearts --> Answering : REFILL with gems, server reopens the attempt
+  OutOfHearts --> [*] : NO THANKS, no XP
+  FeedbackCorrect --> Complete : last exercise correct, server finalizes in the same request
+  Complete --> Celebrations : XP and accuracy
+  Celebrations --> [*] : streak screen, daily goal screen, then learn page
 ```
 
 **What differs from the original plan** (all in [`deviations.md`](docs/deviations.md), Phase 6):
@@ -592,7 +592,7 @@ Dev tools are **off by default** (`ENABLE_DEV_TOOLS` defaults to false) and **of
 |---|---|
 | **Achievements** (profile must-have *and* bonus) | 5 seeded badges computed from existing stats (see [table](#achievements-five-computed-from-existing-stats)). All are listed on the profile, with a date if unlocked or server-side progress if locked. |
 | **Responsive design** (bonus) | ≥1024px: sidebar (256px) + centre column (max 600px) + rail (368px). 768–1023px: icon-only sidebar, no rail. <768px: top stats bar + **6 icon-only tabs** (matching the reference; the plan said 4). |
-| **Crowns** | Modern Duolingo uses path nodes. Active nodes carry a progress ring (lessons done ÷ total); completed nodes are gold with a check; locked nodes are grey. Nodes show a star or a check, not a per-skill icon. |
+| **Crowns** | Modern Duolingo uses path nodes. Active nodes carry a progress ring (lessons done ÷ total); completed nodes are gold with a check; locked nodes are grey. Active and locked nodes show the skill's own icon (dimmed while locked). |
 | **Simulated day logic** | Server-side day offset, changed from Settings → Developer tools → Advance day. |
 | **Match pairs and hearts** | Match pairs never cost a heart; a mismatched tap flashes red on the client. |
 | **Leaderboard period** | Weekly (Monday–Sunday) XP from `daily_activity`. No league tiers, promotion zone or countdown (the header shows the week's date range). |
@@ -649,8 +649,8 @@ Hosts: **Vercel** (frontend, root directory `frontend/`) and **Railway** (FastAP
 |---|---|
 | Backend start command | `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1` (**one worker**: SQLite allows one writer at a time) |
 | SQLite file | On a **persistent volume**, e.g. mounted at `/data` with `DATABASE_URL=sqlite:////data/app.db`. Without a volume the file is wiped on every redeploy. |
-| Backend env | `DATABASE_URL`, `CORS_ORIGINS=https://<frontend>.vercel.app,http://localhost:3000`, `HEART_REGEN_MINUTES=30`, `SEED_ON_STARTUP=true`; **do not set `ENABLE_DEV_TOOLS`** |
-| Frontend env | `NEXT_PUBLIC_API_URL=https://<api host>`, set **before** the Vercel build |
+| Backend env | `DATABASE_URL`, `CORS_ORIGINS=https://clone-duolingo-swart.vercel.app,http://localhost:3000`, `HEART_REGEN_MINUTES=30`, `SEED_ON_STARTUP=true`; **do not set `ENABLE_DEV_TOOLS`** |
+| Frontend env | `NEXT_PUBLIC_API_URL=https://cloneduolingo-production.up.railway.app`, set **before** the Vercel build |
 | Order | Deploy backend → check `/api/health` and `/docs` → deploy frontend → add the Vercel URL to `CORS_ORIGINS` → redeploy backend |
 
 ### Startup safeguard (`app/seed/startup.py`, run from the app's lifespan)
@@ -669,29 +669,63 @@ The public deploy has no day simulation because `/api/dev/reset` wipes the datab
 
 ### Cold start
 
-If the Railway plan puts the service to sleep when idle, the first request can take tens of seconds. Open `https://<api host>/api/health` before an evaluation to wake it.
-
-<!-- TODO: paste demo URL and API URL once deployed; confirm the host, volume mount path and whether the plan sleeps -->
+If the Railway plan puts the service to sleep when idle, the first request can take tens of seconds. Open https://cloneduolingo-production.up.railway.app/api/health before an evaluation to wake it.
 
 ---
 
 ## Screenshots
 
-None captured yet. Each placeholder says exactly what the image should show. Put files in `docs/screenshots/`.
+All shots were taken at desktop width on the seeded demo learner, in both light and dark mode. Files are in [`docs/screenshots/`](docs/screenshots/).
 
-1. <!-- TODO: screenshot 1 — Learning path (/learn), desktop: three columns, Unit 1 banner, 3 completed gold nodes, "People" active with progress ring and START bubble, locked nodes below, stats bar (streak 6, XP 115, hearts 4, gems 1200) -->
-2. <!-- TODO: screenshot 2 — Multiple choice: 4 text option cards, one selected; then correct feedback footer (green) -->
-3. <!-- TODO: screenshot 3 — Translate: word bank with tiles in the answer line; then wrong feedback footer (red, "Correct solution:") with the heart count reduced -->
-4. <!-- TODO: screenshot 4 — Match pairs: two columns mid-way, one matched pair greyed out, number badges visible -->
-5. <!-- TODO: screenshot 5 — Fill in the blank: sentence with a gap, 4 options, correct feedback footer -->
-6. <!-- TODO: screenshot 6 — Type the answer: HARD EXERCISE badge, typed text, "Pay attention to the accents." note in the footer -->
-7. <!-- TODO: screenshot 7 — Out-of-hearts modal: sad mascot, "You ran out of hearts!", REFILL (350 gems) / NO THANKS -->
-8. <!-- TODO: screenshot 8 — Lesson-complete screen: confetti, Total XP and Accuracy cards -->
-9. <!-- TODO: screenshot 9 — Streak screen: "7 day streak!" with the week strip -->
-10. <!-- TODO: screenshot 10 — Leaderboard: weekly table with the demo learner highlighted at rank 8, date range in the header -->
-11. <!-- TODO: screenshot 11 — Profile: stat tiles, last-7-days XP chart, achievements (unlocked first, locked with progress) -->
-12. <!-- TODO: screenshot 12 — Mobile view (375px): top stats bar, path, 6-tab bottom bar -->
-13. <!-- TODO: screenshot 13 — Settings: Developer tools section with ADVANCE DAY / RESET DEMO, plus dark mode toggle -->
+### Learning path
+
+| Light mode: 3 completed skills, "People" active with its progress ring, Unit 2 locked | Dark mode: the same path |
+|---|---|
+| ![Learning path in light mode](docs/screenshots/01-path-light.png) | ![Learning path in dark mode](docs/screenshots/02-path-dark.png) |
+
+| Node popover: "1 of 3 lessons complete" with START | |
+|---|---|
+| ![Node popover on the active skill](docs/screenshots/03-node-popover.png) | |
+
+### Lesson player: correct answers
+
+| Multiple choice: chosen card turns green, "Nice!" footer | Translate (word bank): tiles on the answer line, "3 IN A ROW" combo flag |
+|---|---|
+| ![Multiple choice, correct](docs/screenshots/04-multiple-choice-correct.png) | ![Translate, correct, with combo flag](docs/screenshots/05-translate-correct-combo.png) |
+
+| Fill in the blank: chosen word fills the gap, "4 IN A ROW" | Match pairs: matched pair greyed out, number keys 1–5 and 6–0, no CHECK needed |
+|---|---|
+| ![Fill in the blank, correct](docs/screenshots/06-fill-blank-correct.png) | ![Match pairs in progress](docs/screenshots/13-match-pairs.png) |
+
+### Lesson player: wrong answers and hearts
+
+| Multiple choice, wrong: red card, "Correct solution:" footer, hearts 3 → 2 | Translate, wrong: red answer line and the correct sentence, hearts 2 → 1 |
+|---|---|
+| ![Multiple choice, wrong](docs/screenshots/07-multiple-choice-wrong.png) | ![Translate, wrong](docs/screenshots/08-translate-wrong.png) |
+
+| Type the answer: HARD EXERCISE badge, wrong answer, hearts 1 → 0 | Out of hearts: sad mascot, REFILL (350 gems) / NO THANKS |
+|---|---|
+| ![Type the answer, wrong](docs/screenshots/09-type-answer-wrong.png) | ![Out-of-hearts modal](docs/screenshots/10-out-of-hearts.png) |
+
+| Type the answer, nearly right (light mode): missing accent still passes with "Pay attention to the accents." | Quit confirmation: "Wait, don't go!" with KEEP LEARNING / END SESSION |
+|---|---|
+| ![Type the answer, accepted with an accent note](docs/screenshots/16-type-answer-accent-note.png) | ![Quit confirmation modal](docs/screenshots/14-quit-modal.png) |
+
+### Lesson end
+
+| Lesson complete: Total XP and Accuracy cards from the server's result | Streak extended: "7 day streak!" with the last-7-days strip |
+|---|---|
+| ![Lesson complete screen](docs/screenshots/17-lesson-complete.png) | ![Streak screen](docs/screenshots/18-streak.png) |
+
+### Profile, leaderboard and settings
+
+| Profile: stat tiles, last-7-days XP chart, achievements with progress (Wildfire 6/7) | Weekly leaderboard: Oct 5 – Oct 11, demo learner highlighted at #8 |
+|---|---|
+| ![Profile page](docs/screenshots/15-profile.png) | ![Weekly leaderboard](docs/screenshots/12-leaderboard.png) |
+
+| Settings: display name, Light/Dark theme, daily goal | |
+|---|---|
+| ![Settings page](docs/screenshots/11-settings.png) | |
 
 ---
 
@@ -709,7 +743,6 @@ None captured yet. Each placeholder says exactly what the image should show. Put
 | **Lesson-complete extras** | No "REVIEW LESSON" button, no per-lesson Time card, no achievement-unlock toast | Add with matching server data |
 | **Streak extras** | No "% of learners", Friend Streaks, Streak Society | Needs social data |
 | **Timed / legendary mode** | Not built | Practice variant on completed skills |
-| **Skill icons** | `skill.icon` is stored but path nodes show a star or check | Per-skill icons |
 | **Dark-mode colours** | Dark values are measured approximations from reference screenshots | Refine against a calibrated source |
 | **Error UX** | Failed loads show a message (path, lesson); no retry button | Retry states |
 | **Frontend tests** | None automated | Reducer unit tests, e2e lesson run |
