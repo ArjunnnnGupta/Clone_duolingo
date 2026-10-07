@@ -227,3 +227,44 @@ def test_simultaneous_completing_answers_award_once(
     assert stats.total_xp == 115 + 15  # one perfect lesson, awarded once
     assert today.lessons_completed == 1
     assert len(answers_for_last) == 1  # the losing request's answer row was rolled back
+
+
+def test_quit_racing_a_completion_leaves_the_attempt_completed(
+    seeded_db: Session, demo_user: User, engine: Engine
+) -> None:
+    """This session still holds the attempt as in progress when another request completes it,
+    like a quit tapped while the final answer was in flight. The quit must not overwrite it."""
+    attempt = lesson_engine.start_lesson(seeded_db, demo_user, skill_at(seeded_db, 1, 4).id)
+    for exercise in attempt.exercises[:-1]:
+        answer(seeded_db, demo_user, attempt, exercise.id, is_correct=True)
+    # Keep this session's copy alive: the identity map holds objects weakly, and a request that
+    # read the attempt just before the other commit would still be holding it.
+    stale_copy = seeded_db.get_one(LessonAttempt, attempt.attempt_id)
+    assert stale_copy.status == "in_progress"
+
+    with Session(engine, expire_on_commit=False) as other_request:
+        completing = answer(
+            other_request,
+            other_request.get_one(User, DEMO_USER_ID),
+            attempt,
+            attempt.exercises[-1].id,
+            is_correct=True,
+        )
+    quit_response = lesson_engine.quit_attempt(seeded_db, demo_user, attempt.attempt_id)
+
+    assert completing.result is not None
+    assert quit_response.status == "completed"
+    with Session(engine) as check:
+        stored = check.get_one(LessonAttempt, attempt.attempt_id)
+        assert stored.status == "completed"
+        assert stored.result is not None
+
+
+def test_quit_and_starting_a_new_lesson_abandon_open_attempts(
+    seeded_db: Session, demo_user: User
+) -> None:
+    first = lesson_engine.start_lesson(seeded_db, demo_user, skill_at(seeded_db, 1, 4).id)
+    second = lesson_engine.start_lesson(seeded_db, demo_user, skill_at(seeded_db, 1, 1).id)
+
+    assert seeded_db.get_one(LessonAttempt, first.attempt_id).status == "abandoned"
+    assert lesson_engine.quit_attempt(seeded_db, demo_user, second.attempt_id).status == "abandoned"

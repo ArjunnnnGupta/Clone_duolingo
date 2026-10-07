@@ -1,9 +1,12 @@
 import type {
+  AnswerResponse,
   ApiErrorBody,
   AttemptResponse,
+  ExerciseAnswer,
   HealthResponse,
   MeResponse,
   PathResponse,
+  QuitResponse,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -44,4 +47,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ skill_id: skillId }),
     }),
+  getAttempt: (attemptId: number) => request<AttemptResponse>(`/attempts/${attemptId}`),
+  submitAnswer: (attemptId: number, exerciseId: number, answer: ExerciseAnswer) =>
+    request<AnswerResponse>(`/attempts/${attemptId}/answer`, {
+      method: "POST",
+      body: JSON.stringify({ exercise_id: exerciseId, answer }),
+    }),
+  quitAttempt: (attemptId: number) =>
+    request<QuitResponse>(`/attempts/${attemptId}/quit`, { method: "POST" }),
 };

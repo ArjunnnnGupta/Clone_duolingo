@@ -3,7 +3,10 @@ import type { ButtonHTMLAttributes } from "react";
 // "white" leaves the text colour to the caller so it can match a coloured card.
 const VARIANT_CLASSES = {
   primary: "border-green-shade bg-green text-surface",
+  secondary: "border-blue-shade bg-blue text-surface",
+  danger: "border-red-shade bg-red text-surface",
   white: "border-border bg-surface",
+  ghost: "border-transparent bg-transparent text-red hover:bg-surface-subtle",
   locked: "border-border bg-border text-text-subtle",
 } as const;
 

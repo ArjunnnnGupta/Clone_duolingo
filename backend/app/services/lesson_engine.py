@@ -8,7 +8,7 @@ import random
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import ColumnElement, select, update
 from sqlalchemy.orm import Session
 
 from app.errors import AppError
@@ -117,12 +117,15 @@ def submit_answer(
 
 
 def quit_attempt(db: Session, user: User, attempt_id: int) -> QuitResponse:
-    """Close an in-progress attempt; hearts already lost stay lost, as in Duolingo."""
+    """Close an in-progress attempt; hearts already lost stay lost, as in Duolingo.
+
+    A quit can race the answer that completes the same attempt, so the status is changed by
+    a conditional UPDATE (see _abandon_in_progress) and a completed attempt stays completed.
+    """
     attempt = _owned_attempt(db, user, attempt_id)
-    if attempt.status == IN_PROGRESS:
-        attempt.status = ABANDONED
-        attempt.finished_at = clock.user_now(db, user)
-        db.commit()
+    _abandon_in_progress(db, clock.user_now(db, user), LessonAttempt.id == attempt.id)
+    db.commit()
+    db.refresh(attempt)
     return QuitResponse(status=attempt.status)
 
 
@@ -160,14 +163,21 @@ def _next_lesson(
 
 def _abandon_open_attempts(db: Session, user: User, now: datetime) -> None:
     # One in-progress attempt per learner, so a stale tab can never finalize twice.
-    open_attempts = db.scalars(
-        select(LessonAttempt).where(
-            LessonAttempt.user_id == user.id, LessonAttempt.status == IN_PROGRESS
-        )
+    _abandon_in_progress(db, now, LessonAttempt.user_id == user.id)
+
+
+def _abandon_in_progress(db: Session, now: datetime, *criteria: ColumnElement[bool]) -> None:
+    """Mark matching attempts abandoned, but only those still in progress when the UPDATE runs.
+
+    Same guard as _claim_completion: the status check sits in the WHERE clause, so an attempt
+    another request completed (or failed) a moment earlier is left exactly as it is.
+    """
+    db.execute(
+        update(LessonAttempt)
+        .where(*criteria, LessonAttempt.status == IN_PROGRESS)
+        .values(status=ABANDONED, finished_at=now)
+        .execution_options(synchronize_session=False)
     )
-    for open_attempt in open_attempts:
-        open_attempt.status = ABANDONED
-        open_attempt.finished_at = now
 
 
 def _owned_attempt(db: Session, user: User, attempt_id: int) -> LessonAttempt:

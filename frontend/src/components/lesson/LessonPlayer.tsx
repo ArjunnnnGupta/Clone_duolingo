@@ -1,0 +1,89 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useAttempt, useQuitAttempt } from "@/lib/queries";
+import type { AttemptResponse } from "@/lib/types";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { ExerciseRenderer } from "./ExerciseRenderer";
+import { FeedbackBanner } from "./FeedbackBanner";
+import { LessonCompleteScreen } from "./LessonCompleteScreen";
+import { LessonFooter } from "./LessonFooter";
+import { LessonHeader } from "./LessonHeader";
+import { LessonMessageScreen } from "./LessonMessageScreen";
+import { QuitConfirmModal } from "./QuitConfirmModal";
+import { ReviewIntro } from "./ReviewIntro";
+import { useLessonPlayer } from "./useLessonPlayer";
+
+export function LessonPlayer({ attemptId }: { attemptId: number }) {
+  const { data: attempt, isError, error } = useAttempt(attemptId);
+
+  if (isError) {
+    return <LessonMessageScreen title="We couldn't open this lesson" message={error.message} />;
+  }
+  if (!attempt) {
+    return <Skeleton className="m-4 h-4" />;
+  }
+  return <ActiveLesson attempt={attempt} />;
+}
+
+function ActiveLesson({ attempt }: { attempt: AttemptResponse }) {
+  const router = useRouter();
+  const [isQuitOpen, setIsQuitOpen] = useState(false);
+  const { state, currentExercise, setAnswer, checkCurrentAnswer, continueLesson } =
+    useLessonPlayer(attempt, isQuitOpen);
+  const quitAttempt = useQuitAttempt(attempt.attempt_id);
+
+  if (state.phase === "complete" && state.result) {
+    return <LessonCompleteScreen result={state.result} />;
+  }
+  if (state.phase === "failed") {
+    return <LessonMessageScreen title="You ran out of hearts" message="Come back when you have more hearts." />;
+  }
+  if (state.phase === "ended") {
+    return <LessonMessageScreen title="This lesson has ended" message="Start it again from the path." />;
+  }
+
+  const isReviewIntro = state.phase === "reviewIntro";
+  // Once the server has finalized the lesson there is no progress left to lose, so X just leaves.
+  const handleQuit = () => (state.result ? router.push("/learn") : setIsQuitOpen(true));
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <LessonHeader
+        progressFraction={state.correctIds.length / state.exercises.length}
+        hearts={state.hearts}
+        isQuitDisabled={state.phase === "checking"}
+        onQuit={handleQuit}
+      />
+      <main className="mx-auto flex w-full max-w-[600px] flex-1 flex-col justify-center px-4 py-6">
+        {isReviewIntro && <ReviewIntro />}
+        {!isReviewIntro && currentExercise && (
+          <ExerciseRenderer
+            key={`${currentExercise.id}-${state.step}`}
+            exercise={currentExercise}
+            isLocked={state.phase !== "answering" || isQuitOpen}
+            onAnswerChange={setAnswer}
+          />
+        )}
+        {state.errorMessage && <p className="mt-4 text-center text-red">{state.errorMessage}</p>}
+      </main>
+      {state.phase === "feedback" && state.feedback ? (
+        <FeedbackBanner feedback={state.feedback} onContinue={continueLesson} />
+      ) : (
+        <LessonFooter
+          label={isReviewIntro ? "Continue" : "Check"}
+          isEnabled={isReviewIntro || (state.phase === "answering" && state.answer !== null)}
+          onPress={isReviewIntro ? continueLesson : checkCurrentAnswer}
+        />
+      )}
+      <QuitConfirmModal
+        isOpen={isQuitOpen}
+        isQuitting={quitAttempt.isPending}
+        errorMessage={quitAttempt.error?.message ?? null}
+        onKeepLearning={() => setIsQuitOpen(false)}
+        onEndSession={() => quitAttempt.mutate()}
+      />
+    </div>
+  );
+}
