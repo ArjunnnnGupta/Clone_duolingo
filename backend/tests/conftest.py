@@ -53,7 +53,8 @@ def client(engine: Engine, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClie
         with session_factory() as session:
             yield session
 
-    app = create_app()
+    # Startup runs against the test database too (already seeded, so it changes nothing).
+    app = create_app(engine)
     app.dependency_overrides[get_db] = get_test_db
     with TestClient(app) as test_client:
         yield test_client
