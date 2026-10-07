@@ -4,8 +4,10 @@ import type {
   AttemptResponse,
   ExerciseAnswer,
   HealthResponse,
+  LeaderboardResponse,
   MeResponse,
   PathResponse,
+  ProfileResponse,
   QuitResponse,
 } from "./types";
 
@@ -42,6 +44,8 @@ export const api = {
   getHealth: () => request<HealthResponse>("/health"),
   getMe: () => request<MeResponse>("/me"),
   getPath: () => request<PathResponse>("/path"),
+  getProfile: () => request<ProfileResponse>("/me/profile"),
+  getLeaderboard: () => request<LeaderboardResponse>("/leaderboard"),
   startLesson: (skillId: number) =>
     request<AttemptResponse>("/lessons/start", {
       method: "POST",

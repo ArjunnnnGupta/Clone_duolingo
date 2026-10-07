@@ -2,8 +2,13 @@
 
 import { motion } from "framer-motion";
 
-// fraction is 0 to 1; the caller decides what it measures.
-export function ProgressBar({ fraction }: { fraction: number }) {
+interface ProgressBarProps {
+  // 0 to 1; the caller decides what it measures.
+  fraction: number;
+  fillClassName?: string;
+}
+
+export function ProgressBar({ fraction, fillClassName = "bg-green" }: ProgressBarProps) {
   return (
     <div
       role="progressbar"
@@ -11,7 +16,7 @@ export function ProgressBar({ fraction }: { fraction: number }) {
       className="relative h-4 w-full overflow-hidden rounded-full bg-border"
     >
       <motion.div
-        className="relative h-full rounded-full bg-green"
+        className={`relative h-full rounded-full ${fillClassName}`}
         initial={false}
         animate={{ width: `${fraction * 100}%` }}
         transition={{ type: "spring", stiffness: 120, damping: 20 }}

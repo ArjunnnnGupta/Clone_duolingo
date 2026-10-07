@@ -104,3 +104,24 @@ Running list of agreed departures from the plan. Each needs one line in the fina
 - The dev-tools panel is always shown; when the server has dev tools off, its 404 is shown as "Dev tools are off on this server".
 - The GUIDEBOOK button shows a "Coming soon!" toast; the guidebook itself is not built.
 - `Modal` renders into `<body>` through a portal, so the out-of-hearts modal opened from the animated node popover is positioned against the screen rather than the popover.
+
+## Phase 8 (profile, leaderboard, rail cards)
+
+### Backend changes (Phase 4 code)
+- `UserOut` gains `joined_at` (from `users.created_at`), so the profile can show "Joined {month year}".
+- `SettingsUpdate` strips `display_name` before the length check: a name of only spaces is rejected and a padded name is saved trimmed.
+
+### Profile
+- Stat tiles are Day streak, Total XP, Longest streak and Skills completed. Plan section 7 lists a league tile; there are no league tiers in the data model.
+- The edit button links to `/settings` (where the display name is edited), not to a Coming Soon toast as plan section 7 says.
+- The chart is the last 7 days ending today (`week_xp`), titled "Last 7 days", to keep it distinct from the leaderboard's Monday-Sunday week.
+- All achievements are listed, unlocked first with their date, then locked with server progress toward the threshold.
+- No banner avatar, followers/following, friend suggestions, "Current league" or "Top 3 finishes" (reference 18): no data for them.
+
+### Leaderboard
+- The header shows the week's date range from `period_start`/`period_end`, not a countdown: the server sends no days-left value, and computing one would mean client date math against the browser clock.
+- No league tiers, shields, promotion zone or "Set your status" (reference 19): no data for them. Rank numbers are a neutral colour, since there is no promotion zone.
+
+### Rail and pages
+- The rail shows a weekly-rank card (from the leaderboard's `is_me` entry) and a daily-goal card (from `/me.daily`), not a Daily Quests card (reference 20): there is no quest data model.
+- Coming Soon pages exist for `/quests` and `/shop` (the two nav links). `/friends`, listed in plan section 7, is not built; nothing links to it.

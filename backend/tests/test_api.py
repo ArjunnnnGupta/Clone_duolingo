@@ -211,6 +211,23 @@ def test_settings_update_and_validation(client: TestClient) -> None:
     assert "daily_goal_xp" in invalid.json()["error"]["message"]
 
 
+def test_display_names_are_trimmed_and_blank_names_rejected(client: TestClient) -> None:
+    padded = client.patch("/api/me/settings", json={"display_name": "  Sam  "})
+    assert padded.json()["user"]["display_name"] == "Sam"
+
+    blank = client.patch("/api/me/settings", json={"display_name": "   "})
+    assert blank.status_code == 422
+    assert blank.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert client.get("/api/me").json()["user"]["display_name"] == "Sam"  # unchanged
+
+
+def test_joined_at_comes_from_the_users_created_at(client: TestClient, engine: Engine) -> None:
+    with Session(engine) as session:
+        created = session.get_one(User, DEMO_USER_ID).created_at.date().isoformat()
+    assert client.get("/api/me").json()["user"]["joined_at"] == created
+    assert client.get("/api/me/profile").json()["user"]["joined_at"] == created
+
+
 def test_dev_tools_advance_the_day_and_reset(client: TestClient) -> None:
     client.post("/api/dev/advance-day", json={"days": 2})
     # Two idle days break the 6-day streak, and the demo's yesterday-based goal resets.

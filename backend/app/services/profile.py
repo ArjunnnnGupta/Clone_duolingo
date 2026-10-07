@@ -117,6 +117,7 @@ def _user_out(user: User) -> UserOut:
         display_name=user.display_name,
         avatar_color=user.avatar_color,
         daily_goal_xp=user.daily_goal_xp,
+        joined_at=user.created_at.date(),
     )
 
 

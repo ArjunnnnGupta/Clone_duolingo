@@ -62,6 +62,7 @@ export interface MeResponse {
     display_name: string;
     avatar_color: string;
     daily_goal_xp: number;
+    joined_at: string;
   };
   stats: MeStats;
   daily: { goal_xp: number; today_xp: number };
@@ -173,4 +174,46 @@ export interface AnswerResponse {
 
 export interface QuitResponse {
   status: AttemptStatus;
+}
+
+export type MeUser = MeResponse["user"];
+
+export interface AchievementOut {
+  code: string;
+  title: string;
+  description: string;
+  // Name of an original glyph in components/ui/Icon.tsx.
+  icon: string;
+  threshold: number;
+  // Current metric value, already capped at the threshold by the server.
+  progress: number;
+  unlocked_at: string | null;
+}
+
+export interface DayXp {
+  date: string;
+  xp: number;
+}
+
+export interface ProfileResponse {
+  user: MeUser;
+  stats: MeStats;
+  achievements: AchievementOut[];
+  course_progress: { skills_completed: number; skills_total: number };
+  week_xp: DayXp[];
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  user_id: number;
+  display_name: string;
+  avatar_color: string;
+  xp: number;
+  is_me: boolean;
+}
+
+export interface LeaderboardResponse {
+  period_start: string;
+  period_end: string;
+  entries: LeaderboardEntry[];
 }

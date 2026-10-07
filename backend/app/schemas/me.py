@@ -13,6 +13,7 @@ class UserOut(BaseModel):
     display_name: str
     avatar_color: str
     daily_goal_xp: int
+    joined_at: dt.date
 
 
 class StatsOut(BaseModel):
@@ -78,6 +79,12 @@ class ProfileResponse(BaseModel):
 class SettingsUpdate(BaseModel):
     daily_goal_xp: int | None = None
     display_name: str | None = Field(default=None, min_length=1, max_length=40)
+
+    @field_validator("display_name", mode="before")
+    @classmethod
+    def _strip_display_name(cls, name: object) -> object:
+        # Before the length check, so a name of only spaces is rejected instead of saved.
+        return name.strip() if isinstance(name, str) else name
 
     @field_validator("daily_goal_xp")
     @classmethod
