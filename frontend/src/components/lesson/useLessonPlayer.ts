@@ -34,6 +34,7 @@ export function useLessonPlayer(attempt: AttemptResponse, areShortcutsPaused: bo
   }
 
   const continueLesson = () => dispatch({ type: "CONTINUE" });
+  const resumeAfterRefill = (hearts: number) => dispatch({ type: "REFILLED", hearts });
 
   function setAnswer(answer: ExerciseAnswer | null) {
     dispatch({ type: "SET_ANSWER", answer });
@@ -49,7 +50,7 @@ export function useLessonPlayer(attempt: AttemptResponse, areShortcutsPaused: bo
     return action !== null;
   }, areShortcutsPaused);
 
-  return { state, currentExercise, checkCurrentAnswer, setAnswer, continueLesson };
+  return { state, currentExercise, checkCurrentAnswer, setAnswer, continueLesson, resumeAfterRefill };
 }
 
 // Sends one answer and turns the response (or error) into reducer actions.

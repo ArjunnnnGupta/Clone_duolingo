@@ -4,7 +4,7 @@ whose response is that same view."""
 from datetime import date, datetime, timedelta
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import InstrumentedAttribute, Session
 
 from app.models import DailyActivity, Skill, Unit, User, UserSkillProgress
 from app.models.learner import MAX_HEARTS
@@ -12,6 +12,7 @@ from app.schemas.me import (
     AchievementOut,
     CourseProgressOut,
     DailyOut,
+    DayActivityOut,
     DayXp,
     MeResponse,
     ProfileResponse,
@@ -26,18 +27,18 @@ PROFILE_CHART_DAYS = 7
 
 def get_me(db: Session, user: User) -> MeResponse:
     """Top-bar data, with heart regen and streak expiry applied (and saved) on read."""
-    today = _refresh_on_read(db, user)
-    return _me_response(db, user, today)
+    now = _refresh_on_read(db, user)
+    return _me_response(db, user, now)
 
 
 def get_profile(db: Session, user: User) -> ProfileResponse:
-    today = _refresh_on_read(db, user)
+    now = _refresh_on_read(db, user)
     return ProfileResponse(
         user=_user_out(user),
-        stats=_stats_out(user, today),
+        stats=_stats_out(user, now),
         achievements=achievements.list_achievements(db, user),
         course_progress=_course_progress(db, user),
-        week_xp=_recent_xp(db, user, today),
+        week_xp=_recent_xp(db, user, now.date()),
     )
 
 
@@ -77,15 +78,15 @@ def commit_and_get_me(db: Session, user: User) -> MeResponse:
     now = clock.user_now(db, user)
     _apply_lazy_rules(user, now)
     db.commit()
-    return _me_response(db, user, now.date())
+    return _me_response(db, user, now)
 
 
-def _refresh_on_read(db: Session, user: User) -> date:
+def _refresh_on_read(db: Session, user: User) -> datetime:
     """Apply the lazy rules for a read, committing only if they changed something."""
     now = clock.user_now(db, user)
     if _apply_lazy_rules(user, now):
         db.commit()
-    return now.date()
+    return now
 
 
 def _apply_lazy_rules(user: User, now: datetime) -> bool:
@@ -95,15 +96,17 @@ def _apply_lazy_rules(user: User, now: datetime) -> bool:
     return has_regenerated or has_expired
 
 
-def _me_response(db: Session, user: User, today: date) -> MeResponse:
+def _me_response(db: Session, user: User, now: datetime) -> MeResponse:
+    today = now.date()
     today_activity = db.get(DailyActivity, (user.id, today))
     return MeResponse(
         user=_user_out(user),
-        stats=_stats_out(user, today),
+        stats=_stats_out(user, now),
         daily=DailyOut(
             goal_xp=user.daily_goal_xp,
             today_xp=today_activity.xp_earned if today_activity else 0,
         ),
+        recent_days=_recent_days(db, user, today),
     )
 
 
@@ -117,7 +120,7 @@ def _user_out(user: User) -> UserOut:
     )
 
 
-def _stats_out(user: User, today: date) -> StatsOut:
+def _stats_out(user: User, now: datetime) -> StatsOut:
     stats = user.stats
     return StatsOut(
         total_xp=stats.total_xp,
@@ -125,9 +128,11 @@ def _stats_out(user: User, today: date) -> StatsOut:
         hearts=stats.hearts,
         max_hearts=MAX_HEARTS,
         next_heart_at=hearts.next_heart_at(stats),
+        seconds_until_next_heart=hearts.seconds_until_next_heart(stats, now),
+        refill_cost_gems=hearts.REFILL_COST_GEMS,
         current_streak=stats.current_streak,
         longest_streak=stats.longest_streak,
-        streak_active_today=streak.is_active_today(stats, today),
+        streak_active_today=streak.is_active_today(stats, now.date()),
     )
 
 
@@ -147,16 +152,36 @@ def _course_progress(db: Session, user: User) -> CourseProgressOut:
     return CourseProgressOut(skills_completed=skills_completed or 0, skills_total=skills_total)
 
 
+def _recent_days(db: Session, user: User, today: date) -> list[DayActivityOut]:
+    """Which of the last 7 days had a finished lesson, for the streak week strip."""
+    lessons_by_day = _recent_activity(db, user, today, DailyActivity.lessons_completed)
+    return [
+        DayActivityOut(date=day, is_active=lessons_by_day.get(day, 0) > 0)
+        for day in _last_days(today)
+    ]
+
+
 def _recent_xp(db: Session, user: User, today: date) -> list[DayXp]:
     """XP for each of the last 7 days ending today, with 0 for days without a lesson."""
+    xp_by_day = _recent_activity(db, user, today, DailyActivity.xp_earned)
+    return [DayXp(date=day, xp=xp_by_day.get(day, 0)) for day in _last_days(today)]
+
+
+def _last_days(today: date) -> list[date]:
+    """The last 7 days, oldest first, ending today."""
     first_day = today - timedelta(days=PROFILE_CHART_DAYS - 1)
-    xp_by_day = dict(
-        db.execute(
-            select(DailyActivity.activity_date, DailyActivity.xp_earned).where(
-                DailyActivity.user_id == user.id,
-                DailyActivity.activity_date.between(first_day, today),
-            )
-        ).all()
-    )
-    days = [first_day + timedelta(days=offset) for offset in range(PROFILE_CHART_DAYS)]
-    return [DayXp(date=day, xp=xp_by_day.get(day, 0)) for day in days]
+    return [first_day + timedelta(days=offset) for offset in range(PROFILE_CHART_DAYS)]
+
+
+def _recent_activity(
+    db: Session, user: User, today: date, column: InstrumentedAttribute[int]
+) -> dict[date, int]:
+    """One daily_activity column for the last 7 days, keyed by date (days without a row omitted)."""
+    first_day = today - timedelta(days=PROFILE_CHART_DAYS - 1)
+    rows = db.execute(
+        select(DailyActivity.activity_date, column).where(
+            DailyActivity.user_id == user.id,
+            DailyActivity.activity_date.between(first_day, today),
+        )
+    ).all()
+    return {activity_date: value for activity_date, value in rows}

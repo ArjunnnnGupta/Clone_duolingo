@@ -40,7 +40,9 @@ export type LessonAction =
   | { type: "CHECK_ERROR"; message: string }
   | { type: "CONTINUE" }
   // The server closed the attempt (e.g. a lesson was started in another tab).
-  | { type: "LESSON_CLOSED" };
+  | { type: "LESSON_CLOSED" }
+  // A gem refill reopened a failed attempt on the server; hearts come from its response.
+  | { type: "REFILLED"; hearts: number };
 
 // The server keeps no queue, only the answer log. Rebuild it: untouched exercises in lesson
 // order, then the ones answered wrong and not yet right.
@@ -97,6 +99,8 @@ export function lessonReducer(state: LessonState, action: LessonAction): LessonS
       return applyContinue(state);
     case "LESSON_CLOSED":
       return { ...state, phase: "ended" };
+    case "REFILLED":
+      return state.phase === "failed" ? resumeAfterRefill(state, action.hearts) : state;
   }
 }
 
@@ -115,6 +119,16 @@ function applyCheckResult(state: LessonState, response: AnswerResponse): LessonS
       response.correct || state.everMissedIds.includes(answeredId)
         ? state.everMissedIds
         : [...state.everMissedIds, answeredId],
+  };
+}
+
+function resumeAfterRefill(state: LessonState, hearts: number): LessonState {
+  const isReviewStart = !state.hasShownReviewIntro && state.everMissedIds.includes(state.queue[0]);
+  return {
+    ...state,
+    hearts,
+    phase: isReviewStart ? "reviewIntro" : "answering",
+    step: state.step + 1,
   };
 }
 

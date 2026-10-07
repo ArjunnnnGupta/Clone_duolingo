@@ -39,6 +39,25 @@ def test_regen_caps_at_the_maximum() -> None:
     assert stats.hearts == MAX_HEARTS and hearts.next_heart_at(stats) is None
 
 
+def test_seconds_until_next_heart_counts_down_on_the_servers_clock() -> None:
+    stats = make_stats(hearts_updated_at=NOW - timedelta(minutes=10))
+    assert hearts.seconds_until_next_heart(stats, NOW) == 20 * 60
+    assert hearts.seconds_until_next_heart(stats, NOW + timedelta(minutes=5)) == 15 * 60
+
+
+def test_seconds_until_next_heart_is_none_when_full_and_never_negative() -> None:
+    assert hearts.seconds_until_next_heart(make_stats(hearts=MAX_HEARTS), NOW) is None
+    overdue = make_stats(hearts_updated_at=NOW - 2 * REGEN)  # a heart is due; regen not applied yet
+    assert hearts.seconds_until_next_heart(overdue, NOW) == 0
+
+
+def test_seconds_until_next_heart_rounds_up_so_it_never_says_zero_too_early() -> None:
+    # 0.6 s left: the heart has not regenerated, so the countdown must not report 0 yet.
+    almost = make_stats(hearts_updated_at=NOW - REGEN + timedelta(milliseconds=600))
+    assert not hearts.apply_regen(almost, NOW)
+    assert hearts.seconds_until_next_heart(almost, NOW) == 1
+
+
 def test_no_regen_before_a_full_interval() -> None:
     stats = make_stats(hearts_updated_at=NOW - REGEN + timedelta(seconds=1))
     assert not hearts.apply_regen(stats, NOW) and stats.hearts == 2

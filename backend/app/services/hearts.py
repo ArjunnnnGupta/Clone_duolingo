@@ -3,6 +3,7 @@
 These work on a UserStats row and never commit; the calling service owns the transaction.
 """
 
+import math
 from datetime import datetime, timedelta
 
 from app.config import get_settings
@@ -51,6 +52,18 @@ def next_heart_at(stats: UserStats) -> datetime | None:
     if stats.hearts >= MAX_HEARTS:
         return None
     return stats.hearts_updated_at + _regen_interval()
+
+
+def seconds_until_next_heart(stats: UserStats, now: datetime) -> int | None:
+    """Whole seconds until the next heart, measured on the same clock as `now`.
+
+    Rounded up: truncating would report 0 while a fraction of a second is still left and the
+    heart has not regenerated yet, so a client refetching at 0 would get 0 back again.
+    """
+    next_at = next_heart_at(stats)
+    if next_at is None:
+        return None
+    return max(0, math.ceil((next_at - now).total_seconds()))
 
 
 def refill(stats: UserStats, now: datetime) -> None:

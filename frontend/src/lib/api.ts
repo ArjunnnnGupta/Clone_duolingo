@@ -30,8 +30,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
     throw new ApiError(
-      body?.error.code ?? "unknown_error",
-      body?.error.message ?? response.statusText,
+      body?.error?.code ?? "unknown_error",
+      body?.error?.message ?? response.statusText,
       response.status,
     );
   }
@@ -55,4 +55,11 @@ export const api = {
     }),
   quitAttempt: (attemptId: number) =>
     request<QuitResponse>(`/attempts/${attemptId}/quit`, { method: "POST" }),
+  refillHearts: () => request<MeResponse>("/hearts/refill", { method: "POST" }),
+  practiceForHeart: () => request<MeResponse>("/hearts/practice", { method: "POST" }),
+  updateSettings: (settings: { daily_goal_xp?: number; display_name?: string }) =>
+    request<MeResponse>("/me/settings", { method: "PATCH", body: JSON.stringify(settings) }),
+  advanceDay: () =>
+    request<MeResponse>("/dev/advance-day", { method: "POST", body: JSON.stringify({ days: 1 }) }),
+  resetDemo: () => request<MeResponse>("/dev/reset", { method: "POST" }),
 };

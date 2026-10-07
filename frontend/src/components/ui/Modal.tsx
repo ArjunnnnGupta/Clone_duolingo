@@ -2,16 +2,19 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
+  // False when closing means a real decision (leaving a lesson): only the modal's own buttons act.
+  isDismissible?: boolean;
   children: ReactNode;
 }
 
-export function Modal({ isOpen, onClose, children }: ModalProps) {
+export function Modal({ isOpen, onClose, isDismissible = true, children }: ModalProps) {
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || !isDismissible) {
       return;
     }
     function closeOnEscape(event: KeyboardEvent) {
@@ -21,9 +24,16 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
     }
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, isDismissible, onClose]);
 
-  return (
+  // Server render has no document; the modal only ever shows after a click anyway.
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  // Portalled to <body> so a transformed ancestor (e.g. the animated node popover) cannot
+  // turn this fixed overlay into one that is positioned relative to itself.
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -31,7 +41,7 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={isDismissible ? onClose : undefined}
         >
           <motion.div
             role="dialog"
@@ -46,6 +56,7 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

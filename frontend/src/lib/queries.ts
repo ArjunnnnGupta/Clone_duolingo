@@ -17,6 +17,38 @@ export function usePath() {
   return useQuery({ queryKey: queryKeys.path, queryFn: api.getPath });
 }
 
+// Every heart/settings/dev action answers with the whole /me view, so the response replaces the cache.
+function useMeMutation(mutationFn: () => Promise<MeResponse>, shouldRefreshPath = false) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (me) => {
+      queryClient.setQueryData<MeResponse>(queryKeys.me, me);
+      if (shouldRefreshPath) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.path });
+      }
+    },
+  });
+}
+
+export const useRefillHearts = () => useMeMutation(api.refillHearts);
+export const usePracticeForHeart = () => useMeMutation(api.practiceForHeart);
+export const useAdvanceDay = () => useMeMutation(api.advanceDay, true);
+export const useResetDemo = () => useMeMutation(api.resetDemo, true);
+
+export function useUpdateSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.updateSettings,
+    onSuccess: (me) => queryClient.setQueryData<MeResponse>(queryKeys.me, me),
+  });
+}
+
+export function useRefreshMe() {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: queryKeys.me });
+}
+
 export function useStartLesson() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -28,7 +60,8 @@ export function useStartLesson() {
       queryClient.setQueryData<MeResponse>(queryKeys.me, (current) =>
         current && { ...current, stats: { ...current.stats, hearts: attempt.hearts } },
       );
-      router.push(`/lesson/${attempt.attempt_id}`);
+      // Replace, as in plan section 6: the lesson takes the path page's place in history.
+      router.replace(`/lesson/${attempt.attempt_id}`);
     },
   });
 }

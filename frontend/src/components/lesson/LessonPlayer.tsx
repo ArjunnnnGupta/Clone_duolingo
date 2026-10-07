@@ -7,10 +7,11 @@ import type { AttemptResponse } from "@/lib/types";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ExerciseRenderer } from "./ExerciseRenderer";
 import { FeedbackBanner } from "./FeedbackBanner";
-import { LessonCompleteScreen } from "./LessonCompleteScreen";
+import { LessonCelebration } from "./LessonCelebration";
 import { LessonFooter } from "./LessonFooter";
 import { LessonHeader } from "./LessonHeader";
 import { LessonMessageScreen } from "./LessonMessageScreen";
+import { OutOfHeartsModal } from "./OutOfHeartsModal";
 import { QuitConfirmModal } from "./QuitConfirmModal";
 import { ReviewIntro } from "./ReviewIntro";
 import { useLessonPlayer } from "./useLessonPlayer";
@@ -30,15 +31,12 @@ export function LessonPlayer({ attemptId }: { attemptId: number }) {
 function ActiveLesson({ attempt }: { attempt: AttemptResponse }) {
   const router = useRouter();
   const [isQuitOpen, setIsQuitOpen] = useState(false);
-  const { state, currentExercise, setAnswer, checkCurrentAnswer, continueLesson } =
+  const { state, currentExercise, setAnswer, checkCurrentAnswer, continueLesson, resumeAfterRefill } =
     useLessonPlayer(attempt, isQuitOpen);
   const quitAttempt = useQuitAttempt(attempt.attempt_id);
 
   if (state.phase === "complete" && state.result) {
-    return <LessonCompleteScreen result={state.result} />;
-  }
-  if (state.phase === "failed") {
-    return <LessonMessageScreen title="You ran out of hearts" message="Come back when you have more hearts." />;
+    return <LessonCelebration result={state.result} />;
   }
   if (state.phase === "ended") {
     return <LessonMessageScreen title="This lesson has ended" message="Start it again from the path." />;
@@ -53,7 +51,7 @@ function ActiveLesson({ attempt }: { attempt: AttemptResponse }) {
       <LessonHeader
         progressFraction={state.correctIds.length / state.exercises.length}
         hearts={state.hearts}
-        isQuitDisabled={state.phase === "checking"}
+        isQuitDisabled={state.phase === "checking" || state.phase === "failed"}
         onQuit={handleQuit}
       />
       <main className="mx-auto flex w-full max-w-[600px] flex-1 flex-col justify-center px-4 py-6">
@@ -77,6 +75,12 @@ function ActiveLesson({ attempt }: { attempt: AttemptResponse }) {
           onPress={isReviewIntro ? continueLesson : checkCurrentAnswer}
         />
       )}
+      <OutOfHeartsModal
+        isOpen={state.phase === "failed"}
+        onRefilled={resumeAfterRefill}
+        onDecline={() => router.push("/learn")}
+        isDismissible={false}
+      />
       <QuitConfirmModal
         isOpen={isQuitOpen}
         isQuitting={quitAttempt.isPending}

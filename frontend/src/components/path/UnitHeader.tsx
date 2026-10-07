@@ -1,5 +1,5 @@
-import { Icon } from "@/components/ui/Icon";
 import { getUnitColorClasses } from "@/lib/unitColors";
+import { GuidebookButton } from "./GuidebookButton";
 import type { PathUnit } from "@/lib/types";
 
 export function UnitHeader({ unit }: { unit: PathUnit }) {
@@ -17,15 +17,7 @@ export function UnitHeader({ unit }: { unit: PathUnit }) {
         </p>
         <h2 className="text-xl font-extrabold">{unit.description}</h2>
       </div>
-      <button
-        disabled
-        title="Coming soon"
-        aria-label="Guidebook (coming soon)"
-        className="flex items-center gap-2 rounded-xl border-2 border-surface/30 bg-surface/10 px-3 py-2 text-sm font-extrabold uppercase tracking-[0.8px]"
-      >
-        <Icon name="notebook" className="h-6 w-6" />
-        <span className="hidden sm:inline">Guidebook</span>
-      </button>
+      <GuidebookButton />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 """The HTTP layer end to end: a whole lesson over the real routes, plus the error shapes."""
 
+from datetime import date, timedelta
 from typing import Any
 
 import pytest
@@ -8,7 +9,7 @@ from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.models import Exercise, User
+from app.models import DailyActivity, Exercise, User
 from app.seed.attempt_history import CORRECT_SUBMISSIONS, WRONG_SUBMISSIONS
 from app.seed.run import DEMO_USER_ID, reset_database
 from app.services import dev_tools
@@ -84,6 +85,45 @@ def test_play_a_full_lesson_over_http(client: TestClient, engine: Engine) -> Non
 
     assert_stored_result_is_stable(client, engine, attempt_id, exercises[-1]["id"], result)
     assert_state_after_lesson(client)
+
+
+def test_me_exposes_the_countdown_refill_cost_and_week_strip(
+    client: TestClient, engine: Engine
+) -> None:
+    me = client.get("/api/me").json()
+    stats = me["stats"]
+    assert stats["refill_cost_gems"] == REFILL_COST_GEMS
+    assert 0 <= stats["seconds_until_next_heart"] <= 30 * 60  # 4 of 5 hearts, 30 min interval
+
+    days = me["recent_days"]
+    assert len(days) == 7
+    dates = [date.fromisoformat(day["date"]) for day in days]
+    assert dates == [dates[0] + timedelta(days=offset) for offset in range(7)]  # oldest first
+    with Session(engine) as session:
+        lessons_by_date = {
+            row.activity_date: row.lessons_completed
+            for row in session.scalars(select(DailyActivity).where(DailyActivity.user_id == 1))
+        }
+    for day_date, day in zip(dates, days, strict=True):
+        assert day["is_active"] == (lessons_by_date.get(day_date, 0) > 0)
+    # The demo learner has a 6-day streak that last ran yesterday: yesterday lit, today not yet.
+    assert [day["is_active"] for day in days][-2:] == [True, False]
+
+
+def test_week_strip_marks_today_after_a_lesson(client: TestClient, engine: Engine) -> None:
+    attempt = start_people_lesson(client)
+    for exercise in attempt["exercises"]:
+        answer(client, engine, attempt["attempt_id"], exercise["id"], is_correct=True)
+
+    days = client.get("/api/me").json()["recent_days"]
+    assert days[-1]["is_active"] is True
+
+
+def test_full_hearts_have_no_countdown(client: TestClient, engine: Engine) -> None:
+    with Session(engine) as session:
+        session.get_one(User, DEMO_USER_ID).stats.hearts = 5
+        session.commit()
+    assert client.get("/api/me").json()["stats"]["seconds_until_next_heart"] is None
 
 
 def assert_stored_result_is_stable(

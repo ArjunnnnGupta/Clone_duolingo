@@ -21,6 +21,10 @@ class StatsOut(BaseModel):
     hearts: int
     max_hearts: int
     next_heart_at: dt.datetime | None
+    # What the browser counts down: next_heart_at is learner-local wall time (and shifted by the
+    # dev-tools day offset), so it cannot be compared with the browser's own clock.
+    seconds_until_next_heart: int | None
+    refill_cost_gems: int
     current_streak: int
     longest_streak: int
     streak_active_today: bool
@@ -31,10 +35,16 @@ class DailyOut(BaseModel):
     today_xp: int
 
 
+class DayActivityOut(BaseModel):
+    date: dt.date
+    is_active: bool  # at least one lesson finished that day
+
+
 class MeResponse(BaseModel):
     user: UserOut
     stats: StatsOut
     daily: DailyOut
+    recent_days: list[DayActivityOut]  # the last 7 days, oldest first, ending today
 
 
 class AchievementOut(BaseModel):

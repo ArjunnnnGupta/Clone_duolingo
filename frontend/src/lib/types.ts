@@ -42,9 +42,17 @@ export interface MeStats {
   hearts: number;
   max_hearts: number;
   next_heart_at: string | null;
+  // Server-measured countdown; next_heart_at is learner-local time and is not shown directly.
+  seconds_until_next_heart: number | null;
+  refill_cost_gems: number;
   current_streak: number;
   longest_streak: number;
   streak_active_today: boolean;
+}
+
+export interface DayActivity {
+  date: string;
+  is_active: boolean;
 }
 
 export interface MeResponse {
@@ -57,6 +65,8 @@ export interface MeResponse {
   };
   stats: MeStats;
   daily: { goal_xp: number; today_xp: number };
+  // The last 7 days, oldest first, ending today.
+  recent_days: DayActivity[];
 }
 
 export type ExerciseType =
