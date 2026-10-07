@@ -126,6 +126,9 @@ Running list of agreed departures from the plan. Each needs one line in the fina
 - The rail shows a weekly-rank card (from the leaderboard's `is_me` entry) and a daily-goal card (from `/me.daily`), not a Daily Quests card (reference 20): there is no quest data model.
 - Coming Soon pages exist for `/quests` and `/shop` (the two nav links). `/friends`, listed in plan section 7, is not built; nothing links to it.
 
+## Phase 9 (polish)
+- Exercises have no emoji. Plan section 6 (and the seed plan in section 9) uses an emoji as the "picture" on multiple-choice options. The emoji picture cards collided with feedback iconography: the ✅/❌ shown for "yes"/"no" looked like answer spoilers before Check was pressed. Rather than hand-picking around every future collision, emoji were removed from exercises altogether: `VocabItem` has no `emoji` field, multiple-choice options are `{id, text}`, and option cards are text-only. The mascot, course flag and other original iconography are unchanged.
+
 ## Phase 11 (deployment)
 - `ENABLE_DEV_TOOLS` is off in production. Plan section 14 says to keep it on ("the brief asks for testable day logic"), but `/api/dev/reset` wipes the database, so the public deploy does not expose it. Day simulation and reset are local-only; the live Settings page shows "Dev tools are off on this server".
 - Startup safeguard (`app/seed/startup.py`, called from the app's lifespan): creates any missing tables and seeds only when the `users` table is empty, logging which happened. Plan section 14's "seed on first boot" checked for courses; this checks users, and it never drops or reseeds existing data. `SEED_ON_STARTUP` (declared earlier but previously unused) now switches the seed step off.

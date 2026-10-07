@@ -34,7 +34,6 @@ export function MultipleChoiceExercise({
             isDisabled={isLocked}
             onClick={() => select(option.id)}
           >
-            {option.emoji && <span className="text-3xl">{option.emoji}</span>}
             {option.text}
           </OptionCard>
         ))}

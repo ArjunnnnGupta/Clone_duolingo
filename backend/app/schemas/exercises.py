@@ -15,7 +15,6 @@ class _Strict(BaseModel):
 class ChoiceOption(_Strict):
     id: str
     text: str
-    emoji: str | None = None
 
 
 class Tile(_Strict):

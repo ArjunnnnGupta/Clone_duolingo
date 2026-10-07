@@ -75,7 +75,7 @@ def _multiple_choice_to_spanish(
     return _multiple_choice(
         randomizer,
         prompt=f"Which one of these is “{correct.en}”?",
-        choices=[(item.es, item.emoji) for item in items],
+        choices=[item.es for item in items],
         correct_text=correct.es,
     )
 
@@ -87,7 +87,7 @@ def _multiple_choice_to_english(
     return _multiple_choice(
         randomizer,
         prompt=f"What does “{correct.es}” mean?",
-        choices=[(item.en, item.emoji) for item in items],
+        choices=[item.en for item in items],
         correct_text=correct.en,
     )
 
@@ -99,13 +99,10 @@ def _other_vocab(
 
 
 def _multiple_choice(
-    randomizer: random.Random, *, prompt: str, choices: list[tuple[str, str]], correct_text: str
+    randomizer: random.Random, *, prompt: str, choices: list[str], correct_text: str
 ) -> Draft:
     randomizer.shuffle(choices)
-    options = [
-        {"id": f"o{number}", "text": text, "emoji": emoji}
-        for number, (text, emoji) in enumerate(choices, start=1)
-    ]
+    options = [{"id": f"o{number}", "text": text} for number, text in enumerate(choices, start=1)]
     correct_id = next(option["id"] for option in options if option["text"] == correct_text)
     return {
         "type": "multiple_choice",

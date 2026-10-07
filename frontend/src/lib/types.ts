@@ -80,7 +80,6 @@ export type ExerciseType =
 export interface ChoiceOption {
   id: string;
   text: string;
-  emoji: string | null;
 }
 
 export interface Tile {

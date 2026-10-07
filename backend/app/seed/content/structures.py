@@ -7,7 +7,6 @@ from dataclasses import dataclass
 class VocabItem:
     es: str
     en: str
-    emoji: str
 
 
 @dataclass(frozen=True)
