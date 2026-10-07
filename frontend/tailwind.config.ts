@@ -18,6 +18,15 @@ const config: Config = {
         correct: { bg: "#D7FFB8", text: "#58A700" },
         wrong: { bg: "#FFDFE0", text: "#EA2B2B" },
       },
+      // 3D "thickness" under each path node; hex repeats the colour shades above because
+      // box-shadow cannot reference a Tailwind colour token.
+      boxShadow: {
+        "node-green": "0 8px 0 #58A700",
+        "node-blue": "0 8px 0 #1899D6",
+        "node-purple": "0 8px 0 #A568CC",
+        "node-gold": "0 8px 0 #E5B400",
+        "node-locked": "0 8px 0 #AFAFAF",
+      },
       fontFamily: {
         sans: ["var(--font-nunito)", "system-ui", "sans-serif"],
       },

@@ -1,4 +1,10 @@
-import type { ApiErrorBody, HealthResponse } from "./types";
+import type {
+  ApiErrorBody,
+  AttemptResponse,
+  HealthResponse,
+  MeResponse,
+  PathResponse,
+} from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -31,4 +37,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   getHealth: () => request<HealthResponse>("/health"),
+  getMe: () => request<MeResponse>("/me"),
+  getPath: () => request<PathResponse>("/path"),
+  startLesson: (skillId: number) =>
+    request<AttemptResponse>("/lessons/start", {
+      method: "POST",
+      body: JSON.stringify({ skill_id: skillId }),
+    }),
 };
