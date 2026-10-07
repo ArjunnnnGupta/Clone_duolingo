@@ -3,13 +3,14 @@
 import { useState } from "react";
 import type { FillBlankExercise as FillBlankData } from "@/lib/types";
 import { ExercisePrompt } from "./ExercisePrompt";
-import { OptionCard } from "./OptionCard";
+import { OptionCard, selectedState } from "./OptionCard";
 import { useNumberKeys } from "./useNumberKeys";
 import type { ExerciseProps } from "./types";
 
 export function FillBlankExercise({
   exercise,
   isLocked,
+  verdict,
   onAnswerChange,
 }: ExerciseProps<FillBlankData>) {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export function FillBlankExercise({
           <OptionCard
             key={word}
             keyHint={String(index + 1)}
-            state={selectedWord === word ? "selected" : "default"}
+            state={selectedWord === word ? selectedState(verdict) : "default"}
             isDisabled={isLocked}
             onClick={() => select(word)}
           >

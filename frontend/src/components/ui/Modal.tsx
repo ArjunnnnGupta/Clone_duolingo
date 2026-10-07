@@ -37,7 +37,7 @@ export function Modal({ isOpen, onClose, isDismissible = true, children }: Modal
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-text/60 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60 px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

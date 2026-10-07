@@ -1,10 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Mascot } from "@/components/mascot/Mascot";
 import { celebrate } from "@/lib/confetti";
 import type { AttemptResult } from "@/lib/types";
 import { CelebrationLayout } from "./CelebrationLayout";
+import { CountUp } from "./CountUp";
 import { StatCard } from "./StatCard";
 
 // Read-only: XP and accuracy are the figures the server stored when it finalized the lesson.
@@ -27,12 +29,24 @@ export function LessonCompleteScreen({
 
   return (
     <CelebrationLayout onContinue={onContinue}>
-      <Mascot className="h-40 w-40" />
+      {/* The cat jumps twice for joy. */}
+      <motion.div
+        animate={{ y: [0, -28, 0] }}
+        transition={{ duration: 0.5, repeat: 1, delay: 0.2, ease: "easeOut" }}
+      >
+        <Mascot className="h-40 w-40" pose="happy" />
+      </motion.div>
       <h1 className="text-3xl font-extrabold text-gold-shade">Lesson Complete!</h1>
-      <div className="flex gap-4">
-        <StatCard tone="gold" label="Total XP" value={String(result.xp_earned)} icon="bolt" />
+      {/* Cards scale in one after the other; XP counts up to the server's figure. */}
+      <motion.div
+        className="flex gap-4"
+        initial="hidden"
+        animate="shown"
+        transition={{ staggerChildren: 0.15, delayChildren: 0.2 }}
+      >
+        <StatCard tone="gold" label="Total XP" value={<CountUp to={result.xp_earned} />} icon="bolt" />
         <StatCard tone="green" label="Accuracy" value={`${result.accuracy}%`} icon="check" />
-      </div>
+      </motion.div>
     </CelebrationLayout>
   );
 }

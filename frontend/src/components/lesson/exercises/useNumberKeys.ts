@@ -1,10 +1,16 @@
 import { useEffect, useEffectEvent } from "react";
 
-// Pressing 1..count calls onPick(index); ignored while the exercise is locked.
-export function useNumberKeys(count: number, isLocked: boolean, onPick: (index: number) => void) {
+// Pressing the key at keys[i] calls onPick(i); ignored while the exercise is locked.
+// Defaults to "1".."count", like the number badges on option cards.
+export function useNumberKeys(
+  count: number,
+  isLocked: boolean,
+  onPick: (index: number) => void,
+  keys: string[] = Array.from({ length: count }, (_, index) => String(index + 1)),
+) {
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    const index = Number(event.key) - 1;
-    if (Number.isInteger(index) && index >= 0 && index < count) {
+    const index = keys.indexOf(event.key);
+    if (index >= 0) {
       onPick(index);
     }
   });

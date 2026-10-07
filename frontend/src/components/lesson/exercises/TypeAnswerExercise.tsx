@@ -6,9 +6,16 @@ import { ExercisePrompt } from "./ExercisePrompt";
 import { PromptBubble } from "./PromptBubble";
 import type { ExerciseProps } from "./types";
 
+const VERDICT_INPUT_CLASSES = {
+  none: "border-border",
+  correct: "border-green text-green",
+  wrong: "border-red text-red",
+};
+
 export function TypeAnswerExercise({
   exercise,
   isLocked,
+  verdict,
   onAnswerChange,
 }: ExerciseProps<TypeAnswerData>) {
   const [text, setText] = useState("");
@@ -32,7 +39,7 @@ export function TypeAnswerExercise({
         autoCapitalize="off"
         autoComplete="off"
         spellCheck={false}
-        className="w-full rounded-2xl border-2 border-border bg-surface-subtle px-4 py-4 text-[17px] font-bold outline-none placeholder:text-text-subtle focus:border-blue"
+        className={`w-full rounded-2xl border-2 bg-surface-subtle px-4 py-4 ${VERDICT_INPUT_CLASSES[verdict ?? "none"]} text-[17px] font-bold outline-none placeholder:text-text-subtle focus:border-blue`}
       />
     </>
   );

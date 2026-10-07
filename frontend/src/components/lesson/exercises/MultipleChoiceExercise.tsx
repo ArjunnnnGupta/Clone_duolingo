@@ -3,13 +3,14 @@
 import { useState } from "react";
 import type { MultipleChoiceExercise as MultipleChoiceData } from "@/lib/types";
 import { ExercisePrompt } from "./ExercisePrompt";
-import { OptionCard } from "./OptionCard";
+import { OptionCard, selectedState } from "./OptionCard";
 import { useNumberKeys } from "./useNumberKeys";
 import type { ExerciseProps } from "./types";
 
 export function MultipleChoiceExercise({
   exercise,
   isLocked,
+  verdict,
   onAnswerChange,
 }: ExerciseProps<MultipleChoiceData>) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -30,7 +31,7 @@ export function MultipleChoiceExercise({
           <OptionCard
             key={option.id}
             keyHint={String(index + 1)}
-            state={selectedId === option.id ? "selected" : "default"}
+            state={selectedId === option.id ? selectedState(verdict) : "default"}
             isDisabled={isLocked}
             onClick={() => select(option.id)}
           >

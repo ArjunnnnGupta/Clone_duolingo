@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Mascot } from "@/components/mascot/Mascot";
 import { Icon } from "@/components/ui/Icon";
 import { WeekStrip } from "@/components/gamification/WeekStrip";
 import { useMe } from "@/lib/queries";
@@ -20,13 +21,16 @@ export function StreakScreen({
 
   return (
     <CelebrationLayout onContinue={onContinue}>
-      <motion.div
-        initial={{ scale: 0, rotate: -15 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 160, damping: 12 }}
-      >
-        <Icon name="flame" className="h-36 w-36 text-orange" />
-      </motion.div>
+      <div className="flex items-end">
+        <Mascot className="h-28 w-28" pose="happy" />
+        <motion.div
+          initial={{ scale: 0, rotate: -15 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 160, damping: 12 }}
+        >
+          <Icon name="flame" className="h-36 w-36 text-orange" />
+        </motion.div>
+      </div>
       <h1 className="text-3xl font-extrabold text-orange">{streak.count} day streak!</h1>
       {me && (
         <div className="w-full max-w-[420px]">

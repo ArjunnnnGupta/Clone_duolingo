@@ -15,7 +15,7 @@ export function StreakPanel({ stats, days }: StreakPanelProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between rounded-2xl bg-orange p-4 text-surface">
+      <div className="flex items-center justify-between rounded-2xl bg-orange p-4 text-on-color">
         <div>
           <h2 className="text-2xl font-extrabold">{stats.current_streak} day streak</h2>
           <p className="text-[15px]">{message}</p>

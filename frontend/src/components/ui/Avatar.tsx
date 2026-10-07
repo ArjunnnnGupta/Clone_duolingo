@@ -17,7 +17,7 @@ export function Avatar({ name, color, size = "sm" }: AvatarProps) {
   return (
     <span
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-full font-extrabold text-surface ${getAvatarColorClasses(color).fill} ${SIZE_CLASSES[size]}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-extrabold text-on-color ${getAvatarColorClasses(color).fill} ${SIZE_CLASSES[size]}`}
     >
       {name.trim().charAt(0).toUpperCase()}
     </span>

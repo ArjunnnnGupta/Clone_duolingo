@@ -7,9 +7,13 @@ import { PromptBubble } from "./PromptBubble";
 import { WordTile } from "./WordTile";
 import type { ExerciseProps } from "./types";
 
+// The answer line takes the verdict's colour once the answer is checked.
+const VERDICT_LINE_CLASSES = { none: "border-border", correct: "border-green", wrong: "border-red" };
+
 export function TranslateExercise({
   exercise,
   isLocked,
+  verdict,
   onAnswerChange,
 }: ExerciseProps<TranslateData>) {
   const [placedIds, setPlacedIds] = useState<string[]>([]);
@@ -26,7 +30,7 @@ export function TranslateExercise({
     <>
       <ExercisePrompt>{exercise.prompt}</ExercisePrompt>
       <PromptBubble text={sourceText} />
-      <div className="flex min-h-[72px] flex-wrap gap-2 border-y-2 border-border py-3">
+      <div className={`flex min-h-[72px] flex-wrap gap-2 border-y-2 py-3 ${VERDICT_LINE_CLASSES[verdict ?? "none"]}`}>
         {placedIds.map((id) => (
           <WordTile
             key={id}

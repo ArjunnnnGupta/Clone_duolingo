@@ -11,6 +11,7 @@ export type LessonPhase =
   | "checking"
   | "feedback"
   | "reviewIntro"
+  | "encouragement"
   | "failed"
   | "complete"
   | "ended";
@@ -24,6 +25,11 @@ export interface LessonState {
   // Every exercise answered wrong at least once in this attempt; it never shrinks.
   everMissedIds: number[];
   hasShownReviewIntro: boolean;
+  // Exercises flagged hard in the registry; the first one gets a "let's make it harder" screen.
+  hardIds: number[];
+  hasShownEncouragement: boolean;
+  // Correct answers in a row, for the "N IN A ROW" flag. Display only; never sent anywhere.
+  combo: number;
   answer: ExerciseAnswer | null;
   feedback: AnswerResponse | null;
   hearts: number;
@@ -46,7 +52,10 @@ export type LessonAction =
 
 // The server keeps no queue, only the answer log. Rebuild it: untouched exercises in lesson
 // order, then the ones answered wrong and not yet right.
-export function createInitialState(attempt: AttemptResponse): LessonState {
+export function createInitialState(
+  attempt: AttemptResponse,
+  isHard: (exercise: LessonExercise) => boolean = () => false,
+): LessonState {
   const correctIds = new Set(
     attempt.answered.filter((answer) => answer.is_correct).map((answer) => answer.exercise_id),
   );
@@ -69,6 +78,9 @@ export function createInitialState(attempt: AttemptResponse): LessonState {
     correctIds: [...correctIds],
     everMissedIds,
     hasShownReviewIntro: false,
+    hardIds: attempt.exercises.filter(isHard).map((exercise) => exercise.id),
+    hasShownEncouragement: false,
+    combo: 0,
     answer: null,
     feedback: null,
     hearts: attempt.hearts,
@@ -115,6 +127,7 @@ function applyCheckResult(state: LessonState, response: AnswerResponse): LessonS
     hearts: response.hearts,
     result: response.result,
     correctIds: response.correct ? [...state.correctIds, answeredId] : state.correctIds,
+    combo: response.correct ? state.combo + 1 : 0,
     everMissedIds:
       response.correct || state.everMissedIds.includes(answeredId)
         ? state.everMissedIds
@@ -123,18 +136,25 @@ function applyCheckResult(state: LessonState, response: AnswerResponse): LessonS
 }
 
 function resumeAfterRefill(state: LessonState, hearts: number): LessonState {
-  const isReviewStart = !state.hasShownReviewIntro && state.everMissedIds.includes(state.queue[0]);
-  return {
-    ...state,
-    hearts,
-    phase: isReviewStart ? "reviewIntro" : "answering",
-    step: state.step + 1,
-  };
+  return { ...state, hearts, phase: phaseBefore(state, state.queue[0]), step: state.step + 1 };
+}
+
+// What to show before the exercise at the head of the queue: the review intro when the missed
+// ones begin, the encouragement screen before the first hard exercise of a mistake-free run, or
+// the exercise itself.
+function phaseBefore(state: LessonState, headId: number): LessonPhase {
+  if (!state.hasShownReviewIntro && state.everMissedIds.includes(headId)) return "reviewIntro";
+  const isFirstHard = !state.hasShownEncouragement && state.hardIds.includes(headId);
+  if (isFirstHard && state.everMissedIds.length === 0) return "encouragement";
+  return "answering";
 }
 
 function applyContinue(state: LessonState): LessonState {
   if (state.phase === "reviewIntro") {
     return { ...state, phase: "answering", hasShownReviewIntro: true, step: state.step + 1 };
+  }
+  if (state.phase === "encouragement") {
+    return { ...state, phase: "answering", hasShownEncouragement: true, step: state.step + 1 };
   }
   if (state.phase !== "feedback" || state.feedback === null) {
     return state;
@@ -145,8 +165,7 @@ function applyContinue(state: LessonState): LessonState {
 
   if (state.result) return { ...next, phase: "complete" };
   if (state.feedback.status === "failed") return { ...next, phase: "failed" };
-  const isReviewStart = !state.hasShownReviewIntro && state.everMissedIds.includes(queue[0]);
-  return { ...next, phase: isReviewStart ? "reviewIntro" : "answering" };
+  return { ...next, phase: phaseBefore(next, queue[0]) };
 }
 
 // What Enter should do right now; match pairs has no CHECK button, so Enter never checks it.
@@ -155,6 +174,6 @@ export function enterKeyAction(
   isSubmittedOnComplete: boolean,
 ): "check" | "continue" | null {
   if (state.phase === "answering" && state.answer && !isSubmittedOnComplete) return "check";
-  if (state.phase === "feedback" || state.phase === "reviewIntro") return "continue";
+  if (["feedback", "reviewIntro", "encouragement"].includes(state.phase)) return "continue";
   return null;
 }

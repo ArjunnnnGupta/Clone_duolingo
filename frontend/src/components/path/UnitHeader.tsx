@@ -9,10 +9,10 @@ export function UnitHeader({ unit }: { unit: PathUnit }) {
   // the popover click-away layer (z-40) and the popover (z-50) all sit above the banner.
   return (
     <div
-      className={`sticky top-14 z-10 flex items-center justify-between rounded-2xl border-b-4 p-4 text-surface lg:top-4 ${colors.fill} ${colors.shade}`}
+      className={`sticky top-14 z-10 flex items-center justify-between rounded-2xl border-b-4 p-4 text-on-color lg:top-4 ${colors.fill} ${colors.shade}`}
     >
       <div>
-        <p className="text-sm font-extrabold uppercase tracking-[0.8px] text-surface/80">
+        <p className="text-sm font-extrabold uppercase tracking-[0.8px] text-on-color/80">
           {unit.title}
         </p>
         <h2 className="text-xl font-extrabold">{unit.description}</h2>

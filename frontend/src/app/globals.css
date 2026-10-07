@@ -1,6 +1,54 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
 
+/* Light theme (default): the values from CLAUDE.md's design-token table. */
+:root {
+  color-scheme: light;
+  --c-green: #58cc02;
+  --c-green-shade: #58a700;
+  --c-blue: #1cb0f6;
+  --c-blue-shade: #1899d6;
+  --c-red: #ff4b4b;
+  --c-red-shade: #ea2b2b;
+  --c-orange: #ff9600;
+  --c-orange-shade: #cd7900;
+  --c-gold: #ffc800;
+  --c-gold-shade: #e5b400;
+  --c-purple: #ce82ff;
+  --c-purple-shade: #a568cc;
+  --c-text: #4b4b4b;
+  --c-text-muted: #777777;
+  --c-text-subtle: #afafaf;
+  --c-border: #e5e5e5;
+  --c-surface: #ffffff;
+  --c-surface-subtle: #f7f7f7;
+  --c-on-color: #ffffff;
+  --c-scrim: #000000;
+  --c-correct-bg: #d7ffb8;
+  --c-correct-text: #58a700;
+  --c-wrong-bg: #ffdfe0;
+  --c-wrong-text: #ea2b2b;
+  --c-node-locked-edge: #afafaf;
+}
+
+/* Dark theme: page, surface, border and text values measured from the dark-mode reference
+   screenshots (reference/01-21); brand colours are unchanged. Applied by the inline script in
+   app/layout.tsx before first paint. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-text: #f1f7fb;
+  --c-text-muted: #a6b3ba;
+  --c-text-subtle: #52656d;
+  --c-border: #37464f;
+  --c-surface: #131f24;
+  --c-surface-subtle: #202f36;
+  --c-correct-bg: #202f36;
+  --c-correct-text: #93d333;
+  --c-wrong-bg: #202f36;
+  --c-wrong-text: #ff4b4b;
+  --c-node-locked-edge: #202f36;
+}
+
 body {
   @apply bg-surface font-bold text-text;
 }

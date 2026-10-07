@@ -16,7 +16,7 @@ export function AchievementCard({ achievement }: { achievement: AchievementOut }
     >
       <span
         className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${
-          isUnlocked ? "bg-gold text-surface" : "bg-border text-text-subtle"
+          isUnlocked ? "bg-gold text-on-color" : "bg-border text-text-subtle"
         }`}
       >
         <Icon name={toIconName(achievement.icon)} className="h-8 w-8" />

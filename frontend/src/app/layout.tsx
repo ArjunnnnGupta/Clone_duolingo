@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
+import { APPLY_SAVED_THEME_SCRIPT } from "@/lib/theme";
 import { Providers } from "./providers";
 
 // Duolingo text is almost never regular weight, so only bold and extra-bold are loaded.
@@ -17,7 +18,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${nunito.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      data-theme="light"
+      // The inline script may switch data-theme to "dark" before React hydrates.
+      suppressHydrationWarning
+      className={`${nunito.variable} h-full antialiased`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: APPLY_SAVED_THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

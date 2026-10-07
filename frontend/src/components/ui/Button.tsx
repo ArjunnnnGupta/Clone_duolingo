@@ -1,11 +1,12 @@
 import type { ButtonHTMLAttributes } from "react";
 
-// "white" leaves the text colour to the caller so it can match a coloured card.
+// "white" stays white in both themes and leaves the text colour to the caller, so it can match
+// the coloured card it sits on.
 const VARIANT_CLASSES = {
-  primary: "border-green-shade bg-green text-surface",
-  secondary: "border-blue-shade bg-blue text-surface",
-  danger: "border-red-shade bg-red text-surface",
-  white: "border-border bg-surface",
+  primary: "border-green-shade bg-green text-on-color",
+  secondary: "border-blue-shade bg-blue text-on-color",
+  danger: "border-red-shade bg-red text-on-color",
+  white: "border-border bg-on-color",
   ghost: "border-transparent bg-transparent text-red hover:bg-surface-subtle",
   locked: "border-border bg-border text-text-subtle",
 } as const;

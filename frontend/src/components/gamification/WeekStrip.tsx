@@ -15,7 +15,7 @@ export function WeekStrip({ days }: { days: DayActivity[] }) {
             </span>
             <span
               className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                day.is_active ? "bg-orange text-surface" : "bg-border"
+                day.is_active ? "bg-orange text-on-color" : "bg-border"
               }`}
             >
               {day.is_active && <Icon name="check" className="h-5 w-5" />}

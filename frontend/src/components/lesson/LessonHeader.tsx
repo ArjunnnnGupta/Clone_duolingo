@@ -1,15 +1,23 @@
 import { Icon } from "@/components/ui/Icon";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { ComboFlag } from "./ComboFlag";
 import { HeartsCounter } from "./HeartsCounter";
 
 interface LessonHeaderProps {
   progressFraction: number;
   hearts: number;
+  combo: number;
   isQuitDisabled: boolean;
   onQuit: () => void;
 }
 
-export function LessonHeader({ progressFraction, hearts, isQuitDisabled, onQuit }: LessonHeaderProps) {
+export function LessonHeader({
+  progressFraction,
+  hearts,
+  combo,
+  isQuitDisabled,
+  onQuit,
+}: LessonHeaderProps) {
   return (
     <header className="mx-auto flex w-full max-w-[1000px] items-center gap-4 px-4 py-4">
       <button
@@ -20,7 +28,10 @@ export function LessonHeader({ progressFraction, hearts, isQuitDisabled, onQuit 
       >
         <Icon name="close" className="h-7 w-7" />
       </button>
-      <ProgressBar fraction={progressFraction} />
+      <div className="relative flex-1">
+        <ComboFlag combo={combo} />
+        <ProgressBar fraction={progressFraction} />
+      </div>
       <HeartsCounter hearts={hearts} />
     </header>
   );

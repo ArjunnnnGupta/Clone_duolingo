@@ -1,31 +1,44 @@
 import type { Config } from "tailwindcss";
 
-// Each brand colour pairs a main fill with a darker "shade" used for the 3D bottom edge.
+// Every colour is a CSS variable defined in src/app/globals.css, once for the light theme and
+// once for [data-theme="dark"]. Components only ever name the token, so switching theme swaps
+// every colour without touching a component. Each brand colour pairs a main fill with a darker
+// "shade" used for the 3D bottom edge.
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        green: { DEFAULT: "#58CC02", shade: "#58A700" },
-        blue: { DEFAULT: "#1CB0F6", shade: "#1899D6" },
-        red: { DEFAULT: "#FF4B4B", shade: "#EA2B2B" },
-        orange: { DEFAULT: "#FF9600", shade: "#CD7900" },
-        gold: { DEFAULT: "#FFC800", shade: "#E5B400" },
-        purple: { DEFAULT: "#CE82FF", shade: "#A568CC" },
-        text: { DEFAULT: "#4B4B4B", muted: "#777777", subtle: "#AFAFAF" },
-        border: "#E5E5E5",
-        surface: { DEFAULT: "#FFFFFF", subtle: "#F7F7F7" },
-        correct: { bg: "#D7FFB8", text: "#58A700" },
-        wrong: { bg: "#FFDFE0", text: "#EA2B2B" },
+        green: { DEFAULT: "var(--c-green)", shade: "var(--c-green-shade)" },
+        blue: { DEFAULT: "var(--c-blue)", shade: "var(--c-blue-shade)" },
+        red: { DEFAULT: "var(--c-red)", shade: "var(--c-red-shade)" },
+        orange: { DEFAULT: "var(--c-orange)", shade: "var(--c-orange-shade)" },
+        gold: { DEFAULT: "var(--c-gold)", shade: "var(--c-gold-shade)" },
+        purple: { DEFAULT: "var(--c-purple)", shade: "var(--c-purple-shade)" },
+        text: {
+          DEFAULT: "var(--c-text)",
+          muted: "var(--c-text-muted)",
+          subtle: "var(--c-text-subtle)",
+        },
+        border: "var(--c-border)",
+        surface: { DEFAULT: "var(--c-surface)", subtle: "var(--c-surface-subtle)" },
+        // Text and marks drawn on a coloured fill (buttons, banners, nodes): white in both themes.
+        "on-color": "var(--c-on-color)",
+        // Modal backdrop.
+        scrim: "var(--c-scrim)",
+        correct: { bg: "var(--c-correct-bg)", text: "var(--c-correct-text)" },
+        wrong: { bg: "var(--c-wrong-bg)", text: "var(--c-wrong-text)" },
+        // The original cat mascot: a deliberately neon red, distinct from the error/heart red.
+        // Fixed values: the cat looks the same in both themes.
+        mascot: { DEFAULT: "#FF1744", shade: "#C4001D", light: "#FF7A8F", ink: "#3C3C3C" },
       },
-      // 3D "thickness" under each path node; hex repeats the colour shades above because
-      // box-shadow cannot reference a Tailwind colour token.
+      // 3D "thickness" under each path node, drawn in the matching shade.
       boxShadow: {
-        "node-green": "0 8px 0 #58A700",
-        "node-blue": "0 8px 0 #1899D6",
-        "node-purple": "0 8px 0 #A568CC",
-        "node-gold": "0 8px 0 #E5B400",
-        "node-locked": "0 8px 0 #AFAFAF",
+        "node-green": "0 8px 0 var(--c-green-shade)",
+        "node-blue": "0 8px 0 var(--c-blue-shade)",
+        "node-purple": "0 8px 0 var(--c-purple-shade)",
+        "node-gold": "0 8px 0 var(--c-gold-shade)",
+        "node-locked": "0 8px 0 var(--c-node-locked-edge)",
       },
       fontFamily: {
         sans: ["var(--font-nunito)", "system-ui", "sans-serif"],

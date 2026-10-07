@@ -2,7 +2,7 @@
 
 import { motion, useAnimationControls } from "framer-motion";
 import { useEffect } from "react";
-import { Icon } from "@/components/ui/Icon";
+import { Icon, toIconName } from "@/components/ui/Icon";
 import { getUnitColorClasses } from "@/lib/unitColors";
 import type { PathSkill } from "@/lib/types";
 import { ProgressRing } from "./ProgressRing";
@@ -26,8 +26,8 @@ export function SkillNode({ skill, unitColor, shakeCount, onClick }: SkillNodePr
 
   const faceClasses = {
     locked: "bg-border text-text-subtle shadow-node-locked",
-    active: `${colors.fill} text-surface ${colors.nodeShadow}`,
-    completed: "bg-gold text-surface shadow-node-gold",
+    active: `${colors.fill} text-on-color ${colors.nodeShadow}`,
+    completed: "bg-gold text-on-color shadow-node-gold",
   }[skill.state];
 
   return (
@@ -46,7 +46,11 @@ export function SkillNode({ skill, unitColor, shakeCount, onClick }: SkillNodePr
       <span
         className={`flex h-[70px] w-[70px] items-center justify-center rounded-full group-active:translate-y-2 group-active:shadow-none ${faceClasses}`}
       >
-        <Icon name={skill.state === "completed" ? "check" : "star"} className="h-9 w-9" />
+        {/* Completed skills show a check; the others show their own glyph (dimmed while locked). */}
+        <Icon
+          name={skill.state === "completed" ? "check" : toIconName(skill.icon)}
+          className="h-9 w-9"
+        />
       </span>
     </motion.button>
   );

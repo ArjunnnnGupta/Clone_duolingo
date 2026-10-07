@@ -13,6 +13,7 @@ import { LessonHeader } from "./LessonHeader";
 import { LessonMessageScreen } from "./LessonMessageScreen";
 import { OutOfHeartsModal } from "./OutOfHeartsModal";
 import { QuitConfirmModal } from "./QuitConfirmModal";
+import { EncouragementScreen } from "./EncouragementScreen";
 import { ReviewIntro } from "./ReviewIntro";
 import { useLessonPlayer } from "./useLessonPlayer";
 
@@ -42,7 +43,9 @@ function ActiveLesson({ attempt }: { attempt: AttemptResponse }) {
     return <LessonMessageScreen title="This lesson has ended" message="Start it again from the path." />;
   }
 
-  const isReviewIntro = state.phase === "reviewIntro";
+  // Interstitial screens (review intro, encouragement) have only a CONTINUE button.
+  const isInterstitial = state.phase === "reviewIntro" || state.phase === "encouragement";
+  const verdict = state.phase === "feedback" && state.feedback ? (state.feedback.correct ? "correct" : "wrong") : null;
   // Once the server has finalized the lesson there is no progress left to lose, so X just leaves.
   const handleQuit = () => (state.result ? router.push("/learn") : setIsQuitOpen(true));
 
@@ -51,16 +54,19 @@ function ActiveLesson({ attempt }: { attempt: AttemptResponse }) {
       <LessonHeader
         progressFraction={state.correctIds.length / state.exercises.length}
         hearts={state.hearts}
+        combo={state.combo}
         isQuitDisabled={state.phase === "checking" || state.phase === "failed"}
         onQuit={handleQuit}
       />
       <main className="mx-auto flex w-full max-w-[600px] flex-1 flex-col justify-center px-4 py-6">
-        {isReviewIntro && <ReviewIntro />}
-        {!isReviewIntro && currentExercise && (
+        {state.phase === "reviewIntro" && <ReviewIntro />}
+        {state.phase === "encouragement" && <EncouragementScreen />}
+        {!isInterstitial && currentExercise && (
           <ExerciseRenderer
             key={`${currentExercise.id}-${state.step}`}
             exercise={currentExercise}
             isLocked={state.phase !== "answering" || isQuitOpen}
+            verdict={verdict}
             onAnswerChange={setAnswer}
           />
         )}
@@ -70,9 +76,9 @@ function ActiveLesson({ attempt }: { attempt: AttemptResponse }) {
         <FeedbackBanner feedback={state.feedback} onContinue={continueLesson} />
       ) : (
         <LessonFooter
-          label={isReviewIntro ? "Continue" : "Check"}
-          isEnabled={isReviewIntro || (state.phase === "answering" && state.answer !== null)}
-          onPress={isReviewIntro ? continueLesson : checkCurrentAnswer}
+          label={isInterstitial ? "Continue" : "Check"}
+          isEnabled={isInterstitial || (state.phase === "answering" && state.answer !== null)}
+          onPress={isInterstitial ? continueLesson : checkCurrentAnswer}
         />
       )}
       <OutOfHeartsModal

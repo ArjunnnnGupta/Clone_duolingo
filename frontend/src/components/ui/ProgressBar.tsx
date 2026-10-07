@@ -21,7 +21,7 @@ export function ProgressBar({ fraction, fillClassName = "bg-green" }: ProgressBa
         animate={{ width: `${fraction * 100}%` }}
         transition={{ type: "spring", stiffness: 120, damping: 20 }}
       >
-        <span className="absolute inset-x-2 top-1 h-1 rounded-full bg-surface/30" />
+        <span className="absolute inset-x-2 top-1 h-1 rounded-full bg-on-color/30" />
       </motion.div>
     </div>
   );

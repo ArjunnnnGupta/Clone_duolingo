@@ -40,8 +40,8 @@ export function NodePopover({ skill, unitColor, tailOffset }: NodePopoverProps) 
 
   return (
     <PopoverCard cardClassName={colors.fill} tailClassName={colors.fill} tailOffset={tailOffset}>
-      <p className="text-[17px] font-extrabold text-surface">{skill.title}</p>
-      <p className="mt-1 mb-4 text-[15px] text-surface/80">{subtitle}</p>
+      <p className="text-[17px] font-extrabold text-on-color">{skill.title}</p>
+      <p className="mt-1 mb-4 text-[15px] text-on-color/80">{subtitle}</p>
       <Button
         variant="white"
         className={colors.text}
@@ -52,7 +52,7 @@ export function NodePopover({ skill, unitColor, tailOffset }: NodePopoverProps) 
         {isCompleted ? "Practice" : "Start"}
       </Button>
       {startLesson.isError && !isOutOfHeartsOpen && (
-        <p className="mt-3 text-center text-sm text-surface">{startLesson.error.message}</p>
+        <p className="mt-3 text-center text-sm text-on-color">{startLesson.error.message}</p>
       )}
       <OutOfHeartsModal
         isOpen={isOutOfHeartsOpen}

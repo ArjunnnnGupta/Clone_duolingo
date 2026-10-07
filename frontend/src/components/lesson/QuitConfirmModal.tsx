@@ -20,7 +20,7 @@ export function QuitConfirmModal({
   return (
     <Modal isOpen={isOpen} onClose={onKeepLearning}>
       <div className="flex flex-col items-center gap-4 text-center">
-        <Mascot className="h-28 w-28" />
+        <Mascot className="h-28 w-28" pose="sad" />
         <h2 className="text-2xl font-extrabold">
           Wait, don&apos;t go! You&apos;ll lose your progress if you quit now
         </h2>

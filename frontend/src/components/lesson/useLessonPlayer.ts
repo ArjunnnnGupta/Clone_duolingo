@@ -8,13 +8,15 @@ import {
 } from "@/lib/lessonReducer";
 import { useSubmitAnswer } from "@/lib/queries";
 import type { AttemptResponse, ExerciseAnswer } from "@/lib/types";
-import { EXERCISE_REGISTRY } from "./exercises/registry";
+import { EXERCISE_REGISTRY, isHardExercise } from "./exercises/registry";
 import { useEnterKey } from "./useEnterKey";
 
 // Wires the pure reducer to the answer request and the Enter shortcut.
 // Shortcuts pause while something (the quit modal) covers the lesson.
 export function useLessonPlayer(attempt: AttemptResponse, areShortcutsPaused: boolean) {
-  const [state, dispatch] = useReducer(lessonReducer, attempt, createInitialState);
+  const [state, dispatch] = useReducer(lessonReducer, attempt, (initial) =>
+    createInitialState(initial, isHardExercise),
+  );
   const submit = useAnswerSubmission(attempt.attempt_id, dispatch);
 
   const currentExercise = state.exercises.find((exercise) => exercise.id === state.queue[0]) ?? null;
